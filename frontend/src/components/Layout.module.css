@@ -1,0 +1,62 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.brandIcon {
+  color: var(--accent);
+}
+
+.links {
+  display: flex;
+  gap: 4px;
+}
+
+.links a {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: 0.9rem;
+  transition: color 0.15s, background 0.15s;
+}
+
+.links a:hover {
+  color: var(--text);
+  background: var(--bg3);
+}
+
+.links a.active {
+  color: var(--text);
+  background: var(--bg3);
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
