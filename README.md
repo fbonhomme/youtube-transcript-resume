@@ -12,6 +12,7 @@ Génère des synthèses structurées de vidéos YouTube à partir de leurs trans
 - Bibliothèque de synthèses avec filtrage par thème
 - Gestion de thèmes (nom, couleur, icône)
 - Recherche full-text dans les synthèses
+- Export en PDF depuis la page de détail (impression navigateur)
 - Langues supportées : FR, EN, ES, DE, IT, PT, JA, ZH
 
 ---
@@ -36,8 +37,6 @@ pip install -r requirements.txt
 
 cp .env.example .env
 # Renseigne ANTHROPIC_API_KEY dans .env
-
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Frontend
@@ -45,7 +44,20 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 cd frontend
 npm install
-npm run dev
+```
+
+### Démarrage
+
+```bash
+# Lancer backend + frontend en une commande
+./start.sh
+```
+
+Ou séparément :
+
+```bash
+cd backend && .venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
+cd frontend && npm run dev
 ```
 
 L'interface est disponible sur `http://localhost:5173`.  
