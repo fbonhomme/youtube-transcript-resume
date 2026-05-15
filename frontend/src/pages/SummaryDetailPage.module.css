@@ -209,6 +209,12 @@
 }
 .transcriptToggle:hover { border-color: var(--accent); color: var(--text); }
 
+.noTranscript {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .transcript {
   font-size: 0.8rem;
   color: var(--muted);

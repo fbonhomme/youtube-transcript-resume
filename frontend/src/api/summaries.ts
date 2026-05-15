@@ -24,13 +24,16 @@ export interface SummaryListItem {
 export interface SummaryOut extends SummaryListItem {
   summary_long: string;
   sections: Section[];
-  transcript: string;
+  transcript: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
 }
 
 export interface SummarizeRequest {
   url: string;
   language?: string;
   theme_id?: number | null;
+  prompt_id?: number | null;
   tags?: string[];
 }
 

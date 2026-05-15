@@ -43,8 +43,26 @@ _LANGUAGE_INSTRUCTIONS = {
     "zh": "Write the entire summary in Chinese (Simplified).",
 }
 
+# Claude Opus 4.7 pricing (USD per million tokens)
+_PRICE = {
+    "input": 15.0,
+    "output": 75.0,
+    "cache_write": 18.75,
+    "cache_read": 1.50,
+}
 
-async def generate_summary(transcript: str, title: str, language: str = "fr") -> dict:
+
+def get_default_system_prompt() -> str:
+    return _SYSTEM_PROMPT
+
+
+async def generate_summary(
+    transcript: str,
+    title: str,
+    language: str = "fr",
+    system_prompt: str | None = None,
+) -> tuple[dict, dict]:
+    effective_prompt = system_prompt if system_prompt is not None else _SYSTEM_PROMPT
     lang_instruction = _LANGUAGE_INSTRUCTIONS.get(language, _LANGUAGE_INSTRUCTIONS["fr"])
     user_message = (
         f"Video title: {title}\n\n"
@@ -60,7 +78,7 @@ async def generate_summary(transcript: str, title: str, language: str = "fr") ->
         system=[
             {
                 "type": "text",
-                "text": _SYSTEM_PROMPT,
+                "text": effective_prompt,
                 "cache_control": {"type": "ephemeral"},
             }
         ],
@@ -68,18 +86,35 @@ async def generate_summary(transcript: str, title: str, language: str = "fr") ->
     ) as stream:
         async for text in stream.text_stream:
             full_text += text
+        final_msg = await stream.get_final_message()
 
-    # Extract JSON from the response (strip any accidental whitespace)
+    usage = final_msg.usage
+    input_tok = getattr(usage, "input_tokens", 0) or 0
+    output_tok = getattr(usage, "output_tokens", 0) or 0
+    cache_write = getattr(usage, "cache_creation_input_tokens", 0) or 0
+    cache_read = getattr(usage, "cache_read_input_tokens", 0) or 0
+
+    cost_usd = (
+        input_tok * _PRICE["input"] / 1_000_000
+        + output_tok * _PRICE["output"] / 1_000_000
+        + cache_write * _PRICE["cache_write"] / 1_000_000
+        + cache_read * _PRICE["cache_read"] / 1_000_000
+    )
+
+    usage_data = {
+        "input_tokens": input_tok,
+        "output_tokens": output_tok,
+        "cost_usd": round(cost_usd, 6),
+    }
+
     json_str = full_text.strip()
-    # If model wrapped in ```json ... ``` despite instructions, strip it
     match = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", json_str)
     if match:
         json_str = match.group(1)
 
     result = json.loads(json_str)
 
-    # Validate and normalise required fields
-    return {
+    summary_data = {
         "summary_short": str(result.get("summary_short", "")),
         "summary_long": str(result.get("summary_long", "")),
         "key_points": [str(p) for p in result.get("key_points", [])],
@@ -89,3 +124,5 @@ async def generate_summary(transcript: str, title: str, language: str = "fr") ->
         ],
         "duration_read": int(result.get("duration_read", 5)),
     }
+
+    return summary_data, usage_data

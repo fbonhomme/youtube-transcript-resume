@@ -1,5 +1,29 @@
 import { Outlet, NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getStats } from "../api/stats";
 import styles from "./Layout.module.css";
+
+function CostBadge() {
+  const { data } = useQuery({
+    queryKey: ["stats"],
+    queryFn: getStats,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  if (!data) return null;
+
+  const cost = data.total_cost_usd;
+  const label = cost < 0.01
+    ? `< $0.01`
+    : `$${cost.toFixed(2)}`;
+
+  return (
+    <span className={styles.cost} title={`${data.total_summaries} synthèses — ${data.total_input_tokens.toLocaleString()} tokens in / ${data.total_output_tokens.toLocaleString()} tokens out`}>
+      {label}
+    </span>
+  );
+}
 
 export default function Layout() {
   return (
@@ -19,7 +43,11 @@ export default function Layout() {
           <NavLink to="/themes" className={({ isActive }) => isActive ? styles.active : ""}>
             Thèmes
           </NavLink>
+          <NavLink to="/prompts" className={({ isActive }) => isActive ? styles.active : ""}>
+            Prompts
+          </NavLink>
         </div>
+        <CostBadge />
       </nav>
       <main className={styles.main}>
         <Outlet />

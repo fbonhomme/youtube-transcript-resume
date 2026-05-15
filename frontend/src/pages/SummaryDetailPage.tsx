@@ -36,6 +36,7 @@ export default function SummaryDetailPage() {
   if (!summary) return <p className={styles.loading}>Synthèse introuvable.</p>;
 
   const thumb = `https://img.youtube.com/vi/${summary.youtube_id}/maxresdefault.jpg`;
+  const thumbFallback = `https://img.youtube.com/vi/${summary.youtube_id}/hqdefault.jpg`;
   const date = new Date(summary.created_at).toLocaleDateString("fr-FR", {
     day: "2-digit", month: "long", year: "numeric",
   });
@@ -46,7 +47,12 @@ export default function SummaryDetailPage() {
 
       <div className={styles.hero}>
         <a href={summary.youtube_url} target="_blank" rel="noreferrer" className={styles.thumbLink}>
-          <img src={thumb} alt={summary.title} className={styles.thumb} />
+          <img
+            src={thumb}
+            alt={summary.title}
+            className={styles.thumb}
+            onError={(e) => { (e.target as HTMLImageElement).src = thumbFallback; }}
+          />
           <span className={styles.playBtn}>▶</span>
         </a>
         <div className={styles.meta}>
@@ -118,7 +124,9 @@ export default function SummaryDetailPage() {
           {showTranscript ? "Masquer" : "Afficher"} le transcript original
         </button>
         {showTranscript && (
-          <pre className={styles.transcript}>{summary.transcript}</pre>
+          summary.transcript
+            ? <pre className={styles.transcript}>{summary.transcript}</pre>
+            : <p className={styles.noTranscript}>Transcript non disponible pour cette synthèse.</p>
         )}
       </section>
 

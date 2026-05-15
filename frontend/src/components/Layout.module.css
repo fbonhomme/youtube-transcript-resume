@@ -53,6 +53,18 @@
   background: var(--bg3);
 }
 
+.cost {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  cursor: default;
+  white-space: nowrap;
+}
+
 .main {
   flex: 1;
   padding: 24px;

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSummary } from "../api/summaries";
 import { listThemes } from "../api/themes";
+import { listPrompts } from "../api/prompts";
 import styles from "./NewSummaryPage.module.css";
 
 const LANGUAGES = [
@@ -23,11 +24,13 @@ export default function NewSummaryPage() {
   const [url, setUrl] = useState("");
   const [language, setLanguage] = useState("fr");
   const [themeId, setThemeId] = useState<number | null>(null);
+  const [promptId, setPromptId] = useState<number | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [error, setError] = useState("");
 
   const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
+  const { data: prompts = [] } = useQuery({ queryKey: ["prompts"], queryFn: listPrompts });
 
   const mutation = useMutation({
     mutationFn: createSummary,
@@ -51,8 +54,10 @@ export default function NewSummaryPage() {
     e.preventDefault();
     setError("");
     if (!url.trim()) { setError("Veuillez saisir une URL YouTube."); return; }
-    mutation.mutate({ url: url.trim(), language, theme_id: themeId, tags });
+    mutation.mutate({ url: url.trim(), language, theme_id: themeId, prompt_id: promptId, tags });
   };
+
+  const defaultPrompt = prompts.find((p) => p.is_default);
 
   return (
     <div className={styles.wrap}>
@@ -100,6 +105,26 @@ export default function NewSummaryPage() {
               <option value="">— Aucun —</option>
               {themes.map((t) => (
                 <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ""}{t.name}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span>Prompt</span>
+            <select
+              name="prompt"
+              value={promptId ?? ""}
+              onChange={(e) => setPromptId(e.target.value ? Number(e.target.value) : null)}
+              className={styles.input}
+              disabled={mutation.isPending}
+            >
+              <option value="">
+                {defaultPrompt ? `${defaultPrompt.name} (défaut)` : "— Prompt intégré —"}
+              </option>
+              {prompts.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}{p.is_default ? " ✓" : ""}
+                </option>
               ))}
             </select>
           </label>
