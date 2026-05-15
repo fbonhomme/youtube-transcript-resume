@@ -248,3 +248,35 @@
 }
 .btnDanger:hover { background: rgba(244,63,94,0.1); }
 .btnDanger:disabled { opacity: 0.5; }
+
+.noPrint {}
+
+@media print {
+  .back    { display: none; }
+  .actions { display: none; }
+  .noPrint { display: none; }
+
+  .wrap { gap: 20px; }
+
+  .hero { grid-template-columns: 200px 1fr; }
+
+  .playBtn { display: none; }
+
+  .section {
+    background: transparent;
+    border: 1px solid #ccc;
+    break-inside: avoid;
+  }
+
+  .sectionBlock { border-left-color: #555; }
+
+  .longText, .sectionBlock p, .keyPoints li, .subtitle, .date, .pill, .tag {
+    color: #222;
+  }
+
+  .section h2, .sectionTitle, .title { color: #000; }
+
+  .theme { color: #444 !important; }
+
+  .keyPoints li::before { color: #555; }
+}

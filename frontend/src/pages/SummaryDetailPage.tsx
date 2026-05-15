@@ -94,11 +94,12 @@ export default function SummaryDetailPage() {
         </section>
       )}
 
-      <section className={styles.section}>
+      <section className={`${styles.section} ${styles.noPrint}`}>
         <h2>Modifier</h2>
         <label className={styles.field}>
           <span>Thème</span>
           <select
+            name="theme"
             className={styles.select}
             value={summary.theme_id ?? ""}
             onChange={(e) =>
@@ -113,7 +114,7 @@ export default function SummaryDetailPage() {
         </label>
       </section>
 
-      <section className={styles.section}>
+      <section className={`${styles.section} ${styles.noPrint}`}>
         <button className={styles.transcriptToggle} onClick={() => setShowTranscript((v) => !v)}>
           {showTranscript ? "Masquer" : "Afficher"} le transcript original
         </button>
@@ -126,6 +127,9 @@ export default function SummaryDetailPage() {
         <a href={summary.youtube_url} target="_blank" rel="noreferrer" className={styles.btnOutline}>
           Voir sur YouTube ↗
         </a>
+        <button className={styles.btnOutline} onClick={() => window.print()}>
+          Exporter en PDF
+        </button>
         <button
           className={styles.btnDanger}
           onClick={() => { if (confirm("Supprimer cette synthèse ?")) deleteMutation.mutate(); }}

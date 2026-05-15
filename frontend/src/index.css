@@ -33,3 +33,9 @@ input, textarea, select { font-family: inherit; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media print {
+  nav   { display: none; }
+  body  { background: #fff; color: #000; }
+  #root { min-height: unset; }
+}
