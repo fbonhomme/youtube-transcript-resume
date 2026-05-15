@@ -19,6 +19,7 @@ export default function SearchBar({ value, onChange, placeholder = "Rechercherâ€
     <div className={styles.wrap}>
       <span className={styles.icon}>ğŸ”</span>
       <input
+        name="search"
         type="search"
         className={styles.input}
         placeholder={placeholder}

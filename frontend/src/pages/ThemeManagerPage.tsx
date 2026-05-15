@@ -25,6 +25,7 @@ function ThemeForm({
       onSubmit={(e) => { e.preventDefault(); onSave({ name, color, icon: icon || null }); }}
     >
       <input
+        name="theme-name"
         className={styles.input}
         placeholder="Nom du thème"
         value={name}
@@ -32,6 +33,7 @@ function ThemeForm({
         required
       />
       <input
+        name="theme-icon"
         className={styles.input}
         placeholder="Emoji (optionnel)"
         value={icon}

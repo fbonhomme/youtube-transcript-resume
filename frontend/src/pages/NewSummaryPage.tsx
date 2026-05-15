@@ -62,6 +62,7 @@ export default function NewSummaryPage() {
         <label className={styles.field}>
           <span>URL YouTube</span>
           <input
+            name="url"
             type="url"
             placeholder="https://www.youtube.com/watch?v=..."
             value={url}
@@ -75,6 +76,7 @@ export default function NewSummaryPage() {
           <label className={styles.field}>
             <span>Langue de sortie</span>
             <select
+              name="language"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               className={styles.input}
@@ -89,6 +91,7 @@ export default function NewSummaryPage() {
           <label className={styles.field}>
             <span>Thème (optionnel)</span>
             <select
+              name="theme"
               value={themeId ?? ""}
               onChange={(e) => setThemeId(e.target.value ? Number(e.target.value) : null)}
               className={styles.input}
@@ -106,6 +109,7 @@ export default function NewSummaryPage() {
           <span>Tags</span>
           <div className={styles.tagRow}>
             <input
+              name="tag-input"
               type="text"
               placeholder="Ajouter un tag…"
               value={tagInput}
