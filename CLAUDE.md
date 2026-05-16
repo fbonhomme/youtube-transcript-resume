@@ -76,3 +76,16 @@ cd backend
 .venv/bin/alembic revision --autogenerate -m "description"
 .venv/bin/alembic upgrade head
 ```
+
+## Docker
+
+L'application est packagée via `docker-compose.yml` (backend FastAPI + frontend nginx). `backend/start.sh` → `preflight.py` applique `alembic upgrade head` au démarrage du conteneur.
+
+**Définition de « terminé » :** lorsque le développement d'une évolution est **complètement terminé** (code livré, tests verts, revue faite), mettre à jour la version Docker — reconstruire les images et vérifier que la stack démarre :
+
+```bash
+docker compose build
+docker compose up -d   # vérifier /health, migration appliquée, puis docker compose down si besoin
+```
+
+Ne pas considérer une tâche comme finie tant que la version Docker n'a pas été mise à jour et vérifiée.
