@@ -88,7 +88,7 @@ def update_summary(summary_id: int, payload: SummaryUpdate, db: Session = Depend
         raise HTTPException(status_code=404, detail="Synthèse introuvable")
     if payload.theme_id is not None and not db.get(Theme, payload.theme_id):
         raise HTTPException(status_code=404, detail="Thème introuvable")
-    for field, value in payload.model_dump(exclude_none=True).items():
+    for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(summary, field, value)
     db.commit()
     db.refresh(summary)

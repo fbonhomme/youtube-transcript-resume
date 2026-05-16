@@ -101,6 +101,7 @@ class SummaryOut(BaseModel):
     input_tokens: Optional[int]
     output_tokens: Optional[int]
     cost_usd: Optional[float]
+    feedback: Optional[int]
     theme_id: Optional[int]
     theme: Optional[ThemeOut]
     prompt_id: Optional[int]
@@ -131,6 +132,14 @@ class SummaryListItem(BaseModel):
 class SummaryUpdate(BaseModel):
     theme_id: Optional[int] = None
     tags: Optional[list[str]] = None
+    feedback: Optional[int] = None
+
+    @field_validator("feedback")
+    @classmethod
+    def validate_feedback(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and v not in (-1, 1):
+            raise ValueError("feedback doit valoir 1, -1 ou null")
+        return v
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────

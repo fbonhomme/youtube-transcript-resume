@@ -16,6 +16,7 @@ export interface SummaryListItem {
   key_points: string[];
   tags: string[];
   duration_read: number;
+  feedback: number | null;
   theme_id: number | null;
   theme: Theme | null;
   created_at: string;
@@ -51,8 +52,10 @@ export const listSummaries = (params?: { theme_id?: number; skip?: number; limit
 export const getSummary = (id: number) =>
   api.get<SummaryOut>(`/summaries/${id}`).then((r) => r.data);
 
-export const updateSummary = (id: number, payload: { theme_id?: number | null; tags?: string[] }) =>
-  api.patch<SummaryOut>(`/summaries/${id}`, payload).then((r) => r.data);
+export const updateSummary = (
+  id: number,
+  payload: { theme_id?: number | null; tags?: string[]; feedback?: number | null },
+) => api.patch<SummaryOut>(`/summaries/${id}`, payload).then((r) => r.data);
 
 export const deleteSummary = (id: number) =>
   api.delete(`/summaries/${id}`);
