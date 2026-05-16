@@ -14,6 +14,7 @@ export default function QuickStats() {
     queryKey: ["stats"],
     queryFn: getStats,
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 
   if (!data) return null;
@@ -28,7 +29,7 @@ export default function QuickStats() {
     <div className={styles.row}>
       {items.map((it) => (
         <div key={it.label} className="u-glow-surface u-stat-card">
-          <span className="u-stat-icon">{it.icon}</span>
+          <span className="u-stat-icon" aria-hidden="true">{it.icon}</span>
           <span className={styles.text}>
             <span className="u-stat-value">{it.value}</span>
             <span className="u-stat-label">{it.label}</span>
