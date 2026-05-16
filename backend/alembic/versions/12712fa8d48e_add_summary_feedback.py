@@ -17,8 +17,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    with op.batch_alter_table("summaries") as batch_op:
-        batch_op.add_column(sa.Column("feedback", sa.Integer(), nullable=True))
+    inspector = sa.inspect(op.get_bind())
+    existing_cols = [c["name"] for c in inspector.get_columns("summaries")]
+    if "feedback" not in existing_cols:
+        with op.batch_alter_table("summaries") as batch_op:
+            batch_op.add_column(sa.Column("feedback", sa.Integer(), nullable=True))
 
 
 def downgrade() -> None:

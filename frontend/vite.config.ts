@@ -10,6 +10,8 @@ export default defineConfig({
       '/themes':    'http://localhost:8000',
       '/search':    'http://localhost:8000',
       '/health':    'http://localhost:8000',
+      '/prompts':   'http://localhost:8000',
+      '/stats':     'http://localhost:8000',
     },
   },
 })
