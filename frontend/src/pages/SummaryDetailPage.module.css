@@ -11,6 +11,7 @@
   margin-bottom: 20px;
   color: var(--text2);
   font-size: 0.85rem;
+  transition: color .12s;
 }
 .back:hover { color: var(--accent); }
 
@@ -183,6 +184,8 @@
   padding: 0;
 }
 .tocLink:hover { color: var(--accent); }
+
+.section { scroll-margin-top: calc(var(--nav-h) + 12px); }
 
 .section h2,
 .section h3 {

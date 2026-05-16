@@ -83,6 +83,7 @@ export default function SummaryDetailPage() {
               onClick={() => setFeedback(1)}
               disabled={updateMutation.isPending}
               aria-label="J'aime"
+              aria-pressed={summary.feedback === 1}
             >
               👍
             </button>
@@ -91,6 +92,7 @@ export default function SummaryDetailPage() {
               onClick={() => setFeedback(-1)}
               disabled={updateMutation.isPending}
               aria-label="Je n'aime pas"
+              aria-pressed={summary.feedback === -1}
             >
               👎
             </button>
