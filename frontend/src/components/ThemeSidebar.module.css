@@ -1,100 +1,43 @@
-/* Desktop: vertical sidebar */
 .sidebar {
-  width: var(--sidebar-w);
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  position: sticky;
-  top: calc(var(--nav-h) + 32px);
+  gap: 12px;
 }
 
 .label {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text3);
-  padding: 0 10px;
-  margin-bottom: 6px;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 10px;
-  border: none;
-  background: transparent;
+  letter-spacing: 0.06em;
   color: var(--text2);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  font-weight: 400;
-  text-align: left;
-  transition: background .12s, color .12s;
-  width: 100%;
 }
 
-.item:hover {
-  background: var(--bg3);
-  color: var(--text);
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
 }
-
-.item.active {
-  background: var(--accent);
-  color: #000;
-  font-weight: 600;
-}
-.item.active .count { color: rgba(0,0,0,.6); }
 
 .dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.name { flex: 1; min-width: 0; }
+.name { flex: 1; }
 
 .count {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--text3);
-  flex-shrink: 0;
+  font-size: 0.72rem;
+  opacity: 0.7;
 }
 
-/* ── Mobile: horizontal pill row ── */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
+@media (max-width: 1024px) {
+  .list {
     flex-direction: row;
-    overflow-x: auto;
-    gap: 6px;
-    position: static;
-    padding-bottom: 4px;
-    scrollbar-width: none;
+    flex-wrap: wrap;
   }
-
-  .sidebar::-webkit-scrollbar { display: none; }
-
-  .label { display: none; }
-
-  .item {
-    flex-shrink: 0;
-    width: auto;
-    padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    font-size: 0.8rem;
-    gap: 6px;
-  }
-
-  .item.active {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-dim);
-  }
-
-  .count { display: none; }
 }
