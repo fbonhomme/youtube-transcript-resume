@@ -50,6 +50,7 @@ class Summary(Base):
     input_tokens = Column(Integer, nullable=True)
     output_tokens = Column(Integer, nullable=True)
     cost_usd = Column(Float, nullable=True)
+    feedback = Column(Integer, nullable=True)  # 1 = like, -1 = dislike, NULL = neutre
 
     theme_id = Column(Integer, ForeignKey("themes.id"), nullable=True)
     theme = relationship("Theme", back_populates="summaries")
