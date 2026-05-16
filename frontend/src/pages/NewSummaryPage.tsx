@@ -124,7 +124,7 @@ export default function NewSummaryPage() {
                 disabled={mutation.isPending}
               >
                 <option value="">
-                  {defaultPrompt ? `${defaultPrompt.name} (défaut)` : "— Intégré —"}
+                  {defaultPrompt ? "— Prompt par défaut —" : "— Intégré —"}
                 </option>
                 {prompts.map((p) => (
                   <option key={p.id} value={p.id}>

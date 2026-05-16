@@ -36,7 +36,7 @@ export default function LibraryPage() {
         </div>
 
         {isLoading ? (
-          <p className={styles.loading}>Chargement…</p>
+          <p className={styles.empty}>Chargement…</p>
         ) : items.length === 0 ? (
           <p className={styles.empty}>
             {q || themeId ? "Aucun résultat." : "Aucune synthèse — commencez par en créer une."}

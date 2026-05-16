@@ -37,7 +37,7 @@ def update_prompt(prompt_id: int, payload: PromptUpdate, db: Session = Depends(g
     prompt = db.get(Prompt, prompt_id)
     if not prompt:
         raise HTTPException(status_code=404, detail="Prompt introuvable")
-    data = payload.model_dump(exclude_none=True)
+    data = payload.model_dump(exclude_unset=True)
     if data.get("is_default"):
         db.query(Prompt).filter(Prompt.id != prompt_id, Prompt.is_default.is_(True)).update({"is_default": False})
     for field, value in data.items():

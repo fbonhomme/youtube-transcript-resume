@@ -12,6 +12,7 @@
   --text:    #f0f0ee;
   --text2:   #999999;
   --text3:   #555555;
+  --muted:   var(--text2);  /* alias rétro-compat pour modules non migrés */
   --accent:       #c9ff47;
   --accent-dim:   rgba(201,255,71,.08);
   --accent-glow:  rgba(201,255,71,.18);
