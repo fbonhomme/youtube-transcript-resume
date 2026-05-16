@@ -4,28 +4,49 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  animation: fadeUp .35s ease;
+  position: relative;
+}
+
+.wrap::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  width: 520px;
+  height: 320px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, var(--glow-strong) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .title {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--text);
+  letter-spacing: -0.02em;
+  text-align: center;
 }
 
 .card {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px 24px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .card h2 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text3);
 }
 
 .form {
@@ -41,10 +62,11 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   outline: none;
   flex: 1;
   min-width: 140px;
+  transition: border-color .15s;
 }
 .input:focus { border-color: var(--accent); }
 
@@ -52,6 +74,7 @@
   display: flex;
   gap: 6px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .colorDot {
@@ -59,11 +82,15 @@
   height: 22px;
   border-radius: 50%;
   border: 2px solid transparent;
-  transition: transform 0.12s;
+  transition: transform .12s;
+  flex-shrink: 0;
 }
-
 .colorDot:hover { transform: scale(1.15); }
-.selectedColor { border-color: #fff; transform: scale(1.15); }
+.selectedColor {
+  border-color: var(--accent);
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--bg2), 0 0 0 4px var(--accent);
+}
 
 .formActions {
   display: flex;
@@ -73,23 +100,24 @@
 .btnPrimary {
   padding: 8px 18px;
   background: var(--accent);
-  color: #fff;
+  color: #000;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: background 0.15s;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: background .15s;
 }
-.btnPrimary:hover { background: var(--accent-hover); }
+.btnPrimary:hover { background: var(--accent-dark); }
 
 .btnGhost {
   padding: 8px 14px;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border2);
   border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: 0.85rem;
-  transition: border-color 0.12s, color 0.12s;
+  color: var(--text3);
+  font-size: 0.8rem;
+  transition: border-color .12s, color .12s;
 }
 .btnGhost:hover { border-color: var(--accent); color: var(--text); }
 
@@ -98,9 +126,9 @@
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: 0.85rem;
-  transition: color 0.12s;
+  color: var(--text3);
+  font-size: 0.8rem;
+  transition: color .12s;
 }
 .btnGhostDanger:hover { color: var(--danger); }
 
@@ -122,25 +150,27 @@
   gap: 10px;
   padding: 10px 8px;
   border-radius: var(--radius-sm);
+  transition: background .1s;
 }
 .row:hover { background: var(--bg3); }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .themeName {
   flex: 1;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: var(--text);
 }
 
 .count {
-  font-size: 0.78rem;
-  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text3);
   white-space: nowrap;
 }
 
@@ -150,11 +180,16 @@
 }
 
 .empty {
-  color: var(--muted);
-  font-size: 0.88rem;
+  color: var(--text3);
+  font-size: 0.875rem;
+  text-align: center;
 }
 
 .error {
   color: var(--danger);
   font-size: 0.85rem;
+  background: var(--danger-dim);
+  border: 1px solid rgba(255,68,102,.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
 }
