@@ -106,6 +106,7 @@
   padding: 8px 16px;
   border-radius: 999px;
   border: 1px solid var(--border2);
+  background: transparent;
   color: var(--text);
   font-size: 0.82rem;
   font-weight: 600;
