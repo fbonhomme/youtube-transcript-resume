@@ -23,7 +23,12 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
     else:
         prompt = db.query(Prompt).filter(Prompt.is_default.is_(True)).first()
 
-    transcript_data = await fetch_transcript(payload.url)
+    try:
+        transcript_data = await fetch_transcript(payload.url)
+    except ValueError as exc:
+        # transcript désactivé / introuvable / URL invalide : erreur
+        # attendue et actionnable côté client, pas un 500 opaque.
+        raise HTTPException(status_code=422, detail=str(exc))
     result, usage = await generate_summary(
         transcript=transcript_data["transcript"],
         title=transcript_data["title"],
