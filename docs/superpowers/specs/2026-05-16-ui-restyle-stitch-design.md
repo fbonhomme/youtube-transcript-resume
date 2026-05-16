@@ -62,9 +62,9 @@ static glow.
 ### 3. SummaryCard — `SummaryCard.module.css` (+ minimal `.tsx` className)
 
 - `.title`: color `--accent`, Syne, faint lime text-glow.
-- `.tag`: filled rounded pill. Color cycles `--tag-1..4` via
-  `style={{...}}` or an index-derived modifier class on each tag (index already
-  passed to the card). Footer date kept.
+- `.tag`: filled rounded pill. Color cycles `--tag-1..4` by tag position using
+  an index-derived modifier class (`styles[`tag${i % 4}`]`) — chosen over inline
+  `style` to keep color logic in CSS. Footer date kept.
 - `.card`: border + `--elev`; hover raises elevation and adds a lime border glow.
   Thumbnail overlay gradient slightly stronger for title contrast.
 
