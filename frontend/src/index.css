@@ -179,3 +179,12 @@ input, textarea, select { font-family: inherit; }
 @media (max-width: 1024px) {
   .u-split { grid-template-columns: 1fr; }
 }
+
+/* ── Print (PDF export via window.print) ── */
+@media print {
+  nav { display: none !important; }
+  body { background: #fff; color: #000; }
+  #root { min-height: unset; }
+  .u-split { display: block !important; }
+  .u-lime-title { color: #000 !important; text-shadow: none !important; }
+}

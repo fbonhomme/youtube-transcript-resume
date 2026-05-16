@@ -99,6 +99,9 @@ export default function SummaryDetailPage() {
             <a href={summary.youtube_url} target="_blank" rel="noreferrer" className={styles.btnOutline}>
               Voir sur YouTube ↗
             </a>
+            <button className={styles.btnOutline} onClick={() => window.print()}>
+              Exporter en PDF
+            </button>
           </div>
 
           <div className={styles.field}>
@@ -163,7 +166,7 @@ export default function SummaryDetailPage() {
             </section>
           ))}
 
-          <section className={styles.section}>
+          <section className={`${styles.section} ${styles.noPrint}`}>
             <button className={styles.transcriptToggle} onClick={() => setShowTranscript((v) => !v)}>
               {showTranscript ? "Masquer" : "Afficher"} le transcript original
             </button>

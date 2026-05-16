@@ -90,6 +90,9 @@
 @media (prefers-reduced-motion: no-preference) {
   .glow { animation: glowDrift 18s ease-in-out infinite; }
 }
+@media print {
+  .glow { display: none; }
+}
 
 .cta {
   display: inline-flex;
