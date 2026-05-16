@@ -185,7 +185,7 @@
   font-weight: 500;
   background: var(--accent-dim);
   color: var(--accent);
-  border: 1px solid var(--accent-dim);
+  border: 1px solid var(--accent-glow);
   border-radius: 4px;
   padding: 1px 7px;
   text-transform: uppercase;
