@@ -90,7 +90,7 @@ function PromptForm({
           Prompt par défaut
         </label>
         <div className={styles.formActions}>
-          <button type="submit" className={styles.btnPrimary}>
+          <button type="submit" className={`${styles.btnPrimary} u-pill-btn`}>
             {initial?.id ? "Enregistrer" : "Créer"}
           </button>
           {onCancel && (
@@ -131,16 +131,16 @@ export default function PromptsPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Gestion des prompts</h1>
+      <h1 className={`${styles.title} u-lime-title`}>Gestion des prompts</h1>
 
       {!showNew && (
-        <button className={styles.btnPrimary} onClick={() => setShowNew(true)}>
+        <button className={`${styles.btnPrimary} u-pill-btn`} onClick={() => setShowNew(true)}>
           + Nouveau prompt
         </button>
       )}
 
       {showNew && (
-        <section className={styles.card}>
+        <section className={`${styles.card} u-glow-surface`}>
           <h2>Nouveau prompt</h2>
           {error && <p className={styles.error}>{error}</p>}
           <PromptForm
@@ -150,7 +150,7 @@ export default function PromptsPage() {
         </section>
       )}
 
-      <section className={styles.card}>
+      <section className={`${styles.card} u-glow-surface`}>
         <h2>Prompts existants</h2>
         {prompts.length === 0 ? (
           <p className={styles.empty}>

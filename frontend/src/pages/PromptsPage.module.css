@@ -4,28 +4,34 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  animation: fadeUp .35s ease;
 }
 
 .title {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--text);
+  letter-spacing: -0.02em;
 }
 
 .card {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px 24px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .card h2 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text3);
 }
 
 .form {
@@ -46,39 +52,46 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   outline: none;
   flex: 1;
   min-width: 140px;
+  transition: border-color .15s;
 }
 .input:focus { border-color: var(--accent); }
 
 .notice {
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: 0.78rem;
+  color: var(--text3);
   background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  line-height: 1.5;
+  padding: 10px 14px;
+  line-height: 1.6;
 }
 .notice code {
-  font-family: monospace;
+  background: var(--accent-dim);
   color: var(--accent);
+  border: 1px solid var(--glow-strong);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.78em;
 }
 
 .textarea {
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
-  font-size: 0.82rem;
-  font-family: monospace;
-  line-height: 1.55;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  line-height: 1.6;
   outline: none;
   resize: vertical;
   min-height: 320px;
+  transition: border-color .15s;
 }
 .textarea:focus { border-color: var(--accent); }
 
@@ -94,8 +107,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.88rem;
-  color: var(--text);
+  font-size: 0.875rem;
+  color: var(--text2);
   cursor: pointer;
 }
 
@@ -107,24 +120,25 @@
 .btnPrimary {
   padding: 8px 18px;
   background: var(--accent);
-  color: #fff;
+  color: #000;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: background 0.15s;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: background .15s;
   cursor: pointer;
 }
-.btnPrimary:hover { background: var(--accent-hover); }
+.btnPrimary:hover { background: var(--accent-dark); }
 
 .btnGhost {
   padding: 8px 14px;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border2);
   border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: 0.85rem;
-  transition: border-color 0.12s, color 0.12s;
+  color: var(--text3);
+  font-size: 0.8rem;
+  transition: border-color .12s, color .12s;
   cursor: pointer;
 }
 .btnGhost:hover { border-color: var(--accent); color: var(--text); }
@@ -134,9 +148,9 @@
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: 0.85rem;
-  transition: color 0.12s;
+  color: var(--text3);
+  font-size: 0.8rem;
+  transition: color .12s;
   cursor: pointer;
 }
 .btnGhostDanger:hover { color: var(--danger); }
@@ -159,6 +173,7 @@
   gap: 12px;
   padding: 12px 8px;
   border-radius: var(--radius-sm);
+  transition: background .1s;
 }
 .row:hover { background: var(--bg3); }
 
@@ -171,7 +186,7 @@
 }
 
 .promptName {
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text);
   display: flex;
@@ -180,19 +195,21 @@
 }
 
 .badge {
-  font-size: 0.7rem;
-  font-weight: 600;
-  background: var(--accent);
-  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(201,255,71,.2);
   border-radius: 4px;
   padding: 1px 7px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .desc {
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: 0.78rem;
+  color: var(--text3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -202,14 +219,19 @@
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .empty {
-  color: var(--muted);
-  font-size: 0.88rem;
+  color: var(--text3);
+  font-size: 0.875rem;
 }
 
 .error {
   color: var(--danger);
   font-size: 0.85rem;
+  background: var(--danger-dim);
+  border: 1px solid rgba(255,68,102,.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
 }
