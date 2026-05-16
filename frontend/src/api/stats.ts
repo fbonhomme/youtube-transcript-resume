@@ -5,6 +5,8 @@ export interface Stats {
   total_cost_usd: number;
   total_input_tokens: number;
   total_output_tokens: number;
+  total_read_minutes: number;
+  total_tags: number;
 }
 
 export const getStats = () => api.get<Stats>("/stats/").then((r) => r.data);

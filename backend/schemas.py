@@ -140,6 +140,8 @@ class StatsOut(BaseModel):
     total_cost_usd: float
     total_input_tokens: int
     total_output_tokens: int
+    total_read_minutes: int
+    total_tags: int
 
 
 # ── Search ───────────────────────────────────────────────────────────────────
