@@ -122,10 +122,6 @@ input, textarea, select { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: 14px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--elev);
   padding: 18px 22px;
 }
 .u-stat-card .u-stat-icon {
@@ -163,9 +159,10 @@ input, textarea, select { font-family: inherit; }
   padding: 7px 14px;
   font-size: 0.85rem;
   font-weight: 500;
+  cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
-.u-pill-filter:hover { color: var(--text); border-color: var(--border2); }
+.u-pill-filter:hover { background: var(--bg4); color: var(--text); border-color: var(--border2); }
 .u-pill-filter.is-active {
   background: var(--accent);
   color: #000;
@@ -174,7 +171,7 @@ input, textarea, select { font-family: inherit; }
 
 .u-split {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 1fr 1.2fr; /* ~45/55 split for split-screen reading view */
   gap: 28px;
   align-items: start;
 }
