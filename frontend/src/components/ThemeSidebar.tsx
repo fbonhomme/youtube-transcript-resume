@@ -14,6 +14,7 @@ export default function ThemeSidebar({ themes, selectedId, onSelect }: Props) {
       <div className={styles.list}>
         <button
           className={`u-pill-filter ${selectedId === null ? "is-active" : ""}`}
+          aria-pressed={selectedId === null}
           onClick={() => onSelect(null)}
         >
           Tous
@@ -22,6 +23,7 @@ export default function ThemeSidebar({ themes, selectedId, onSelect }: Props) {
           <button
             key={t.id}
             className={`u-pill-filter ${selectedId === t.id ? "is-active" : ""}`}
+            aria-pressed={selectedId === t.id}
             onClick={() => onSelect(t.id)}
           >
             <span
