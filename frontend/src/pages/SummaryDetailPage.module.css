@@ -223,3 +223,57 @@
   color: var(--text3);
   font-size: 0.85rem;
 }
+
+.noPrint {}
+
+/* ── Print layout (PDF export via window.print) ── */
+@media print {
+  .back,
+  .player,
+  .actions,
+  .field,
+  .btnDanger,
+  .noPrint { display: none !important; }
+
+  .wrap { animation: none; }
+
+  .left {
+    position: static;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .right { gap: 18px; }
+
+  .subtitle,
+  .date,
+  .pill,
+  .tag,
+  .longText,
+  .tocLink,
+  .section p,
+  .takeaways li,
+  .toc li { color: #222 !important; }
+
+  .pill,
+  .tag {
+    background: transparent !important;
+    border: 1px solid #ccc;
+  }
+
+  .title,
+  .section h2,
+  .section h3,
+  .sectionTitle,
+  .takeaways h2,
+  .toc h2 { color: #000 !important; }
+
+  .takeaways,
+  .toc,
+  .section {
+    background: transparent !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}
