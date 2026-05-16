@@ -10,15 +10,17 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = '12712fa8d48e'
-down_revision: Union[str, None] = '0003'
+revision: str = "12712fa8d48e"
+down_revision: Union[str, None] = "0003"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('summaries', sa.Column('feedback', sa.Integer(), nullable=True))
+    with op.batch_alter_table("summaries") as batch_op:
+        batch_op.add_column(sa.Column("feedback", sa.Integer(), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column('summaries', 'feedback')
+    with op.batch_alter_table("summaries") as batch_op:
+        batch_op.drop_column("feedback")
