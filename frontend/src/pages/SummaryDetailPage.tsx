@@ -28,34 +28,41 @@ export default function SummaryDetailPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { theme_id?: number | null }) => updateSummary(Number(id), payload),
+    mutationFn: (payload: { theme_id?: number | null; feedback?: number | null }) =>
+      updateSummary(Number(id), payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["summary", id] }),
   });
 
   if (isLoading) return <p className={styles.loading}>Chargement…</p>;
   if (!summary) return <p className={styles.loading}>Synthèse introuvable.</p>;
 
-  const thumb = `https://img.youtube.com/vi/${summary.youtube_id}/maxresdefault.jpg`;
-  const thumbFallback = `https://img.youtube.com/vi/${summary.youtube_id}/hqdefault.jpg`;
   const date = new Date(summary.created_at).toLocaleDateString("fr-FR", {
     day: "2-digit", month: "long", year: "numeric",
   });
+
+  const scrollToSection = (i: number) => {
+    document.getElementById(`section-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const setFeedback = (value: number) => {
+    updateMutation.mutate({ feedback: summary.feedback === value ? null : value });
+  };
 
   return (
     <div className={styles.wrap}>
       <Link to="/library" className={styles.back}>← Bibliothèque</Link>
 
-      <div className={styles.hero}>
-        <a href={summary.youtube_url} target="_blank" rel="noreferrer" className={styles.thumbLink}>
-          <img
-            src={thumb}
-            alt={summary.title}
-            className={styles.thumb}
-            onError={(e) => { (e.target as HTMLImageElement).src = thumbFallback; }}
-          />
-          <span className={styles.playBtn}>▶</span>
-        </a>
-        <div className={styles.meta}>
+      <div className="u-split">
+        <div className={styles.left}>
+          <div className={styles.player}>
+            <iframe
+              src={`https://www.youtube.com/embed/${summary.youtube_id}`}
+              title={summary.title}
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
           {summary.theme && (
             <span className={styles.theme} style={{ color: summary.theme.color }}>
               {summary.theme.icon} {summary.theme.name}
@@ -69,78 +76,102 @@ export default function SummaryDetailPage() {
             {summary.tags.map((t) => <span key={t} className={styles.tag}>{t}</span>)}
           </div>
           <p className={styles.date}>{date}</p>
+
+          <div className={styles.actions}>
+            <button
+              className={`${styles.feedbackBtn} ${summary.feedback === 1 ? styles.liked : ""}`}
+              onClick={() => setFeedback(1)}
+              disabled={updateMutation.isPending}
+              aria-label="J'aime"
+            >
+              👍
+            </button>
+            <button
+              className={`${styles.feedbackBtn} ${summary.feedback === -1 ? styles.disliked : ""}`}
+              onClick={() => setFeedback(-1)}
+              disabled={updateMutation.isPending}
+              aria-label="Je n'aime pas"
+            >
+              👎
+            </button>
+            <a href={summary.youtube_url} target="_blank" rel="noreferrer" className={styles.btnOutline}>
+              Voir sur YouTube ↗
+            </a>
+          </div>
+
+          <div className={styles.field}>
+            <span className={styles.fieldLabel}>Thème</span>
+            <select
+              className={styles.select}
+              value={summary.theme_id ?? ""}
+              onChange={(e) =>
+                updateMutation.mutate({ theme_id: e.target.value ? Number(e.target.value) : null })
+              }
+            >
+              <option value="">— Aucun —</option>
+              {themes.map((t) => (
+                <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ""}{t.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            className={styles.btnDanger}
+            onClick={() => { if (confirm("Supprimer cette synthèse ?")) deleteMutation.mutate(); }}
+            disabled={deleteMutation.isPending}
+          >
+            Supprimer
+          </button>
         </div>
-      </div>
 
-      {summary.key_points.length > 0 && (
-        <section className={styles.section}>
-          <h2>Points clés</h2>
-          <ul className={styles.keyPoints}>
-            {summary.key_points.map((p, i) => (
-              <li key={i}>{p}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+        <div className={styles.right}>
+          {summary.key_points.length > 0 && (
+            <section className={styles.takeaways}>
+              <h2>Key Takeaways</h2>
+              <ul>
+                {summary.key_points.map((p, i) => <li key={i}>{p}</li>)}
+              </ul>
+            </section>
+          )}
 
-      <section className={styles.section}>
-        <h2>Résumé détaillé</h2>
-        <p className={styles.longText}>{summary.summary_long}</p>
-      </section>
+          {summary.sections.length > 0 && (
+            <section className={styles.toc}>
+              <h2>Sommaire</h2>
+              <ol>
+                {summary.sections.map((s, i) => (
+                  <li key={i}>
+                    <button className={styles.tocLink} onClick={() => scrollToSection(i)}>
+                      {s.title}
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
-      {summary.sections.length > 0 && (
-        <section className={styles.section}>
-          <h2>Sections</h2>
+          <section className={styles.section}>
+            <h2>Résumé détaillé</h2>
+            <p className={styles.longText}>{summary.summary_long}</p>
+          </section>
+
           {summary.sections.map((s, i) => (
-            <div key={i} className={styles.sectionBlock}>
+            <section key={i} id={`section-${i}`} className={styles.section}>
               <h3 className={styles.sectionTitle}>{s.title}</h3>
               <p>{s.content}</p>
-            </div>
+            </section>
           ))}
-        </section>
-      )}
 
-      <section className={styles.section}>
-        <h2>Modifier</h2>
-        <div className={styles.field}>
-          <span className={styles.fieldLabel}>Thème</span>
-          <select
-            className={styles.select}
-            value={summary.theme_id ?? ""}
-            onChange={(e) =>
-              updateMutation.mutate({ theme_id: e.target.value ? Number(e.target.value) : null })
-            }
-          >
-            <option value="">— Aucun —</option>
-            {themes.map((t) => (
-              <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ""}{t.name}</option>
-            ))}
-          </select>
+          <section className={styles.section}>
+            <button className={styles.transcriptToggle} onClick={() => setShowTranscript((v) => !v)}>
+              {showTranscript ? "Masquer" : "Afficher"} le transcript original
+            </button>
+            {showTranscript && (
+              summary.transcript
+                ? <pre className={styles.transcript}>{summary.transcript}</pre>
+                : <p className={styles.noTranscript}>Transcript non disponible pour cette synthèse.</p>
+            )}
+          </section>
         </div>
-      </section>
-
-      <section className={styles.section}>
-        <button className={styles.transcriptToggle} onClick={() => setShowTranscript((v) => !v)}>
-          {showTranscript ? "Masquer" : "Afficher"} le transcript original
-        </button>
-        {showTranscript && (
-          summary.transcript
-            ? <pre className={styles.transcript}>{summary.transcript}</pre>
-            : <p className={styles.noTranscript}>Transcript non disponible pour cette synthèse.</p>
-        )}
-      </section>
-
-      <div className={styles.actions}>
-        <a href={summary.youtube_url} target="_blank" rel="noreferrer" className={styles.btnOutline}>
-          Voir sur YouTube ↗
-        </a>
-        <button
-          className={styles.btnDanger}
-          onClick={() => { if (confirm("Supprimer cette synthèse ?")) deleteMutation.mutate(); }}
-          disabled={deleteMutation.isPending}
-        >
-          Supprimer
-        </button>
       </div>
     </div>
   );
