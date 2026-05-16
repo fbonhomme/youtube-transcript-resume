@@ -120,6 +120,7 @@ class SummaryListItem(BaseModel):
     key_points: list[str]
     tags: list[str]
     duration_read: int
+    feedback: Optional[int] = None
     cost_usd: Optional[float]
     theme_id: Optional[int]
     theme: Optional[ThemeOut]

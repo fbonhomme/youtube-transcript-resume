@@ -28,6 +28,7 @@ def test_set_like_then_dislike_then_neutral(client, db_session):
     assert r.json()["feedback"] == 1
 
     r = client.patch(f"/summaries/{sid}", json={"feedback": -1})
+    assert r.status_code == 200
     assert r.json()["feedback"] == -1
 
     r = client.patch(f"/summaries/{sid}", json={"feedback": None})
