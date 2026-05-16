@@ -4,6 +4,7 @@ import { searchSummaries } from "../api/summaries";
 import { listThemes } from "../api/themes";
 import SummaryCard from "../components/SummaryCard";
 import SearchBar from "../components/SearchBar";
+import QuickStats from "../components/QuickStats";
 import ThemeSidebar from "../components/ThemeSidebar";
 import styles from "./LibraryPage.module.css";
 
@@ -25,6 +26,7 @@ export default function LibraryPage() {
       <ThemeSidebar themes={themes} selectedId={themeId} onSelect={setThemeId} />
 
       <section className={styles.content}>
+        <QuickStats />
         <div className={styles.header}>
           <h1 className={`${styles.title} u-lime-title`}>
             Bibliothèque
