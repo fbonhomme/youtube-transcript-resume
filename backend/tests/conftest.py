@@ -12,6 +12,7 @@ from sqlalchemy.pool import StaticPool
 from database import Base, get_db
 from main import app
 
+# Module-scoped on purpose: shared in-memory DB via StaticPool; schema is created/dropped per test by the db_session fixture.
 _engine = create_engine(
     "sqlite://",
     connect_args={"check_same_thread": False},
@@ -39,4 +40,4 @@ def client(db_session):
     app.dependency_overrides[get_db] = _override_get_db
     with TestClient(app) as test_client:
         yield test_client
-    app.dependency_overrides.clear()
+    del app.dependency_overrides[get_db]
