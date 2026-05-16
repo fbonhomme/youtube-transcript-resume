@@ -61,7 +61,7 @@ export default function SummaryDetailPage() {
               {summary.theme.icon} {summary.theme.name}
             </span>
           )}
-          <h1 className={styles.title}>{summary.title}</h1>
+          <h1 className={`${styles.title} u-lime-title`}>{summary.title}</h1>
           <p className={styles.subtitle}>{summary.summary_short}</p>
           <div className={styles.pills}>
             <span className={styles.pill}>{summary.duration_read} min de lecture</span>
@@ -102,8 +102,8 @@ export default function SummaryDetailPage() {
 
       <section className={styles.section}>
         <h2>Modifier</h2>
-        <label className={styles.field}>
-          <span>Thème</span>
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Thème</span>
           <select
             className={styles.select}
             value={summary.theme_id ?? ""}
@@ -116,7 +116,7 @@ export default function SummaryDetailPage() {
               <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ""}{t.name}</option>
             ))}
           </select>
-        </label>
+        </div>
       </section>
 
       <section className={styles.section}>

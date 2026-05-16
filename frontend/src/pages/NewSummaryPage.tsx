@@ -61,105 +61,111 @@ export default function NewSummaryPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Nouvelle synthèse</h1>
+      <div className={styles.heading}>
+        <h1 className={`${styles.title} u-lime-title`}>Nouvelle synthèse</h1>
+        <p className={styles.subtitle}>Collez une URL YouTube pour générer une synthèse structurée par IA.</p>
+      </div>
 
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <label className={styles.field}>
-          <span>URL YouTube</span>
+      <form onSubmit={handleSubmit}>
+        <div className={styles.urlBlock}>
+          <label className={styles.urlLabel} htmlFor="url">URL YouTube</label>
           <input
+            id="url"
             name="url"
             type="url"
             placeholder="https://www.youtube.com/watch?v=..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className={styles.input}
+            className={styles.urlInput}
             disabled={mutation.isPending}
           />
-        </label>
-
-        <div className={styles.row}>
-          <label className={styles.field}>
-            <span>Langue de sortie</span>
-            <select
-              name="language"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className={styles.input}
-              disabled={mutation.isPending}
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className={styles.field}>
-            <span>Thème (optionnel)</span>
-            <select
-              name="theme"
-              value={themeId ?? ""}
-              onChange={(e) => setThemeId(e.target.value ? Number(e.target.value) : null)}
-              className={styles.input}
-              disabled={mutation.isPending}
-            >
-              <option value="">— Aucun —</option>
-              {themes.map((t) => (
-                <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ""}{t.name}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className={styles.field}>
-            <span>Prompt</span>
-            <select
-              name="prompt"
-              value={promptId ?? ""}
-              onChange={(e) => setPromptId(e.target.value ? Number(e.target.value) : null)}
-              className={styles.input}
-              disabled={mutation.isPending}
-            >
-              <option value="">
-                {defaultPrompt ? `${defaultPrompt.name} (défaut)` : "— Prompt intégré —"}
-              </option>
-              {prompts.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}{p.is_default ? " ✓" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
 
-        <div className={styles.field}>
-          <span>Tags</span>
-          <div className={styles.tagRow}>
-            <input
-              name="tag-input"
-              type="text"
-              placeholder="Ajouter un tag…"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-              className={styles.input}
-              disabled={mutation.isPending}
-            />
-            <button type="button" className={styles.addBtn} onClick={addTag} disabled={mutation.isPending}>+</button>
-          </div>
-          {tags.length > 0 && (
-            <div className={styles.tags}>
-              {tags.map((t) => (
-                <span key={t} className={styles.tag}>
-                  {t}
-                  <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))}>×</button>
-                </span>
-              ))}
+        <div className={`${styles.optionsCard} u-glow-surface`}>
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Langue</span>
+              <select
+                name="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className={styles.select}
+                disabled={mutation.isPending}
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l.value} value={l.value}>{l.label}</option>
+                ))}
+              </select>
             </div>
-          )}
+
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Thème</span>
+              <select
+                name="theme"
+                value={themeId ?? ""}
+                onChange={(e) => setThemeId(e.target.value ? Number(e.target.value) : null)}
+                className={styles.select}
+                disabled={mutation.isPending}
+              >
+                <option value="">— Aucun —</option>
+                {themes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ""}{t.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Prompt</span>
+              <select
+                name="prompt"
+                value={promptId ?? ""}
+                onChange={(e) => setPromptId(e.target.value ? Number(e.target.value) : null)}
+                className={styles.select}
+                disabled={mutation.isPending}
+              >
+                <option value="">
+                  {defaultPrompt ? `${defaultPrompt.name} (défaut)` : "— Intégré —"}
+                </option>
+                {prompts.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{p.is_default ? " ✓" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.tagSection}>
+            <span className={styles.fieldLabel}>Tags</span>
+            <div className={styles.tagRow}>
+              <input
+                name="tag-input"
+                type="text"
+                placeholder="Ajouter un tag…"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
+                className={styles.tagInput}
+                disabled={mutation.isPending}
+              />
+              <button type="button" className={styles.addBtn} onClick={addTag} disabled={mutation.isPending}>+</button>
+            </div>
+            {tags.length > 0 && (
+              <div className={styles.tags}>
+                {tags.map((t) => (
+                  <span key={t} className={styles.tag}>
+                    {t}
+                    <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <button type="submit" className={styles.submit} disabled={mutation.isPending}>
+        <button type="submit" className={`${styles.submit} u-pill-btn`} disabled={mutation.isPending}>
           {mutation.isPending ? (
             <><span className={styles.spinner} /> Génération en cours…</>
           ) : "Générer la synthèse"}
