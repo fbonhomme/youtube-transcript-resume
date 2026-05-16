@@ -11,11 +11,7 @@ export default function LibraryPage() {
   const [q, setQ] = useState("");
   const [themeId, setThemeId] = useState<number | null>(null);
 
-  const { data: themes = [] } = useQuery({
-    queryKey: ["themes"],
-    queryFn: listThemes,
-  });
-
+  const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
   const { data, isLoading } = useQuery({
     queryKey: ["summaries", q, themeId],
     queryFn: () => searchSummaries({ q, theme_id: themeId ?? undefined }),
@@ -30,7 +26,7 @@ export default function LibraryPage() {
 
       <section className={styles.content}>
         <div className={styles.header}>
-          <h1 className={styles.title}>
+          <h1 className={`${styles.title} u-lime-title`}>
             Bibliothèque
             {total > 0 && <span className={styles.count}>{total}</span>}
           </h1>
@@ -38,15 +34,15 @@ export default function LibraryPage() {
         </div>
 
         {isLoading ? (
-          <p className={styles.empty}>Chargement…</p>
+          <p className={styles.loading}>Chargement…</p>
         ) : items.length === 0 ? (
           <p className={styles.empty}>
-            {q || themeId ? "Aucun résultat." : "Aucune synthèse. Commencez par en créer une !"}
+            {q || themeId ? "Aucun résultat." : "Aucune synthèse — commencez par en créer une."}
           </p>
         ) : (
           <div className={styles.grid}>
-            {items.map((s) => (
-              <SummaryCard key={s.id} summary={s} />
+            {items.map((s, i) => (
+              <SummaryCard key={s.id} summary={s} index={i} />
             ))}
           </div>
         )}
