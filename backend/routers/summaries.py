@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
-from models import Summary, Theme
+from models import Prompt, Summary, Theme
 from schemas import SummarizeRequest, SummaryListItem, SummaryOut, SummaryUpdate
 from services.transcript import fetch_transcript
 from services.summarizer import generate_summary
@@ -15,11 +15,20 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
     if payload.theme_id and not db.get(Theme, payload.theme_id):
         raise HTTPException(status_code=404, detail="Thème introuvable")
 
+    prompt = None
+    if payload.prompt_id:
+        prompt = db.get(Prompt, payload.prompt_id)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt introuvable")
+    else:
+        prompt = db.query(Prompt).filter(Prompt.is_default.is_(True)).first()
+
     transcript_data = await fetch_transcript(payload.url)
-    result = await generate_summary(
+    result, usage = await generate_summary(
         transcript=transcript_data["transcript"],
         title=transcript_data["title"],
         language=payload.language,
+        system_prompt=prompt.system_prompt if prompt else None,
     )
 
     summary = Summary(
@@ -35,6 +44,10 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
         tags=payload.tags,
         duration_read=result["duration_read"],
         theme_id=payload.theme_id,
+        prompt_id=prompt.id if prompt else None,
+        input_tokens=usage["input_tokens"],
+        output_tokens=usage["output_tokens"],
+        cost_usd=usage["cost_usd"],
     )
     db.add(summary)
     db.commit()
@@ -75,7 +88,7 @@ def update_summary(summary_id: int, payload: SummaryUpdate, db: Session = Depend
         raise HTTPException(status_code=404, detail="Synthèse introuvable")
     if payload.theme_id is not None and not db.get(Theme, payload.theme_id):
         raise HTTPException(status_code=404, detail="Thème introuvable")
-    for field, value in payload.model_dump(exclude_none=True).items():
+    for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(summary, field, value)
     db.commit()
     db.refresh(summary)

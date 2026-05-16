@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: fbonhomme/yt-transcript-backend:latest
+    build: ./backend
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: sqlite:////app/data/yt_summaries.db
+    volumes:
+      - db_data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    image: fbonhomme/yt-transcript-frontend:latest
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:

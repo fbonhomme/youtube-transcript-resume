@@ -52,7 +52,7 @@ function ThemeForm({
         ))}
       </div>
       <div className={styles.formActions}>
-        <button type="submit" className={styles.btnPrimary}>
+        <button type="submit" className={`${styles.btnPrimary} u-pill-btn`}>
           {initial?.id ? "Enregistrer" : "Créer"}
         </button>
         {onCancel && (
@@ -91,9 +91,9 @@ export default function ThemeManagerPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Gestion des thèmes</h1>
+      <h1 className={`${styles.title} u-lime-title`}>Gestion des thèmes</h1>
 
-      <section className={styles.card}>
+      <section className={`${styles.card} u-glow-surface`}>
         <h2>Nouveau thème</h2>
         {error && <p className={styles.error}>{error}</p>}
         <ThemeForm
@@ -101,7 +101,7 @@ export default function ThemeManagerPage() {
         />
       </section>
 
-      <section className={styles.card}>
+      <section className={`${styles.card} u-glow-surface`}>
         <h2>Thèmes existants</h2>
         {themes.length === 0 ? (
           <p className={styles.empty}>Aucun thème créé.</p>

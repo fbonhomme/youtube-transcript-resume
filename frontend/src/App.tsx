@@ -4,6 +4,7 @@ import LibraryPage from "./pages/LibraryPage";
 import NewSummaryPage from "./pages/NewSummaryPage";
 import SummaryDetailPage from "./pages/SummaryDetailPage";
 import ThemeManagerPage from "./pages/ThemeManagerPage";
+import PromptsPage from "./pages/PromptsPage";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/library/:id" element={<SummaryDetailPage />} />
         <Route path="/new" element={<NewSummaryPage />} />
         <Route path="/themes" element={<ThemeManagerPage />} />
+        <Route path="/prompts" element={<PromptsPage />} />
       </Route>
     </Routes>
   );

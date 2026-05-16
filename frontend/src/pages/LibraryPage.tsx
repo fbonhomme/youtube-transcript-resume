@@ -4,6 +4,7 @@ import { searchSummaries } from "../api/summaries";
 import { listThemes } from "../api/themes";
 import SummaryCard from "../components/SummaryCard";
 import SearchBar from "../components/SearchBar";
+import QuickStats from "../components/QuickStats";
 import ThemeSidebar from "../components/ThemeSidebar";
 import styles from "./LibraryPage.module.css";
 
@@ -11,11 +12,7 @@ export default function LibraryPage() {
   const [q, setQ] = useState("");
   const [themeId, setThemeId] = useState<number | null>(null);
 
-  const { data: themes = [] } = useQuery({
-    queryKey: ["themes"],
-    queryFn: listThemes,
-  });
-
+  const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
   const { data, isLoading } = useQuery({
     queryKey: ["summaries", q, themeId],
     queryFn: () => searchSummaries({ q, theme_id: themeId ?? undefined }),
@@ -29,8 +26,9 @@ export default function LibraryPage() {
       <ThemeSidebar themes={themes} selectedId={themeId} onSelect={setThemeId} />
 
       <section className={styles.content}>
+        <QuickStats />
         <div className={styles.header}>
-          <h1 className={styles.title}>
+          <h1 className={`${styles.title} u-lime-title`}>
             Bibliothèque
             {total > 0 && <span className={styles.count}>{total}</span>}
           </h1>
@@ -41,12 +39,12 @@ export default function LibraryPage() {
           <p className={styles.empty}>Chargement…</p>
         ) : items.length === 0 ? (
           <p className={styles.empty}>
-            {q || themeId ? "Aucun résultat." : "Aucune synthèse. Commencez par en créer une !"}
+            {q || themeId ? "Aucun résultat." : "Aucune synthèse — commencez par en créer une."}
           </p>
         ) : (
           <div className={styles.grid}>
-            {items.map((s) => (
-              <SummaryCard key={s.id} summary={s} />
+            {items.map((s, i) => (
+              <SummaryCard key={s.id} summary={s} index={i} />
             ))}
           </div>
         )}

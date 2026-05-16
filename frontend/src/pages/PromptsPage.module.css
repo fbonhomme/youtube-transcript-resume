@@ -1,31 +1,16 @@
 .wrap {
-  max-width: 680px;
+  max-width: 800px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
   animation: fadeUp .35s ease;
-  position: relative;
-}
-
-.wrap::before {
-  content: "";
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  width: 520px;
-  height: 320px;
-  transform: translateX(-50%);
-  background: radial-gradient(circle, var(--glow-strong) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: -1;
 }
 
 .title {
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  text-align: center;
 }
 
 .card {
@@ -46,9 +31,14 @@
 
 .form {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formRow {
+  display: flex;
   gap: 10px;
-  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .input {
@@ -65,26 +55,56 @@
 }
 .input:focus { border-color: var(--accent); }
 
-.colors {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
+.notice {
+  font-size: 0.78rem;
+  color: var(--text3);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  line-height: 1.6;
+}
+.notice code {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--glow-strong);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.78em;
 }
 
-.colorDot {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  transition: transform .12s;
-  flex-shrink: 0;
+.textarea {
+  padding: 12px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  min-height: 320px;
+  transition: border-color .15s;
 }
-.colorDot:hover { transform: scale(1.15); }
-.selectedColor {
-  border-color: var(--accent);
-  transform: scale(1.15);
-  box-shadow: 0 0 0 2px var(--bg2), 0 0 0 4px var(--accent);
+.textarea:focus { border-color: var(--accent); }
+
+.formBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text2);
+  cursor: pointer;
 }
 
 .formActions {
@@ -104,6 +124,7 @@
   color: var(--text3);
   font-size: 0.8rem;
   transition: border-color .12s, color .12s;
+  cursor: pointer;
 }
 .btnGhost:hover { border-color: var(--accent); color: var(--text); }
 
@@ -115,6 +136,7 @@
   color: var(--text3);
   font-size: 0.8rem;
   transition: color .12s;
+  cursor: pointer;
 }
 .btnGhostDanger:hover { color: var(--danger); }
 
@@ -133,42 +155,61 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 8px;
+  gap: 12px;
+  padding: 12px 8px;
   border-radius: var(--radius-sm);
   transition: background .1s;
 }
 .row:hover { background: var(--bg3); }
 
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.themeName {
+.info {
   flex: 1;
-  font-size: 0.9rem;
-  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
-.count {
+.promptName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.62rem;
+  font-weight: 500;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent-glow);
+  border-radius: 4px;
+  padding: 1px 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.desc {
+  font-size: 0.78rem;
   color: var(--text3);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rowActions {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .empty {
   color: var(--text3);
   font-size: 0.875rem;
-  text-align: center;
 }
 
 .error {

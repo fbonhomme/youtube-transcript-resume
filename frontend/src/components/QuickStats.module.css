@@ -1,0 +1,10 @@
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+@media (max-width: 720px) {
+  .row { grid-template-columns: 1fr; }
+}
+.text { display: flex; flex-direction: column; gap: 2px; }

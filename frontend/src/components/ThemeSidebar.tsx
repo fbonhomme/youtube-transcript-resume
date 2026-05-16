@@ -11,25 +11,32 @@ export default function ThemeSidebar({ themes, selectedId, onSelect }: Props) {
   return (
     <aside className={styles.sidebar}>
       <p className={styles.label}>Thèmes</p>
-      <button
-        className={`${styles.item} ${selectedId === null ? styles.active : ""}`}
-        onClick={() => onSelect(null)}
-      >
-        <span className={styles.dot} style={{ background: "var(--muted)" }} />
-        Tous
-      </button>
-      {themes.map((t) => (
+      <div className={styles.list}>
         <button
-          key={t.id}
-          className={`${styles.item} ${selectedId === t.id ? styles.active : ""}`}
-          onClick={() => onSelect(t.id)}
+          className={`u-pill-filter ${selectedId === null ? "is-active" : ""}`}
+          aria-pressed={selectedId === null}
+          onClick={() => onSelect(null)}
         >
-          <span className={styles.dot} style={{ background: t.color }} />
-          {t.icon && <span>{t.icon} </span>}
-          <span className={styles.name}>{t.name}</span>
-          <span className={styles.count}>{t.summary_count}</span>
+          Tous
         </button>
-      ))}
+        {themes.map((t) => (
+          <button
+            key={t.id}
+            className={`u-pill-filter ${selectedId === t.id ? "is-active" : ""}`}
+            aria-pressed={selectedId === t.id}
+            onClick={() => onSelect(t.id)}
+          >
+            <span
+              className={styles.dot}
+              style={{ background: t.color }}
+              aria-hidden="true"
+            />
+            {t.icon ? `${t.icon} ` : ""}
+            <span className={styles.name}>{t.name}</span>
+            <span className={styles.count}>{t.summary_count}</span>
+          </button>
+        ))}
+      </div>
     </aside>
   );
 }
