@@ -10,7 +10,7 @@ BACKEND_PID=$!
 
 echo "▶ Démarrage du frontend..."
 cd "$ROOT/frontend"
-nohup npm run dev > /tmp/frontend.log 2>&1 &
+nohup node node_modules/vite/bin/vite.js > /tmp/frontend.log 2>&1 &
 FRONTEND_PID=$!
 
 echo "  Backend PID : $BACKEND_PID  (logs : /tmp/backend.log)"
