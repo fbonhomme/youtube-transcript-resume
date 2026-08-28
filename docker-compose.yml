@@ -1,6 +1,6 @@
 services:
   backend:
-    image: fbonhomme/yt-transcript-backend:latest
+    image: fbonhomme/youtube-transcript-resume:backend
     build: ./backend
     env_file: backend/.env
     environment:
@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: fbonhomme/yt-transcript-frontend:latest
+    image: fbonhomme/youtube-transcript-resume:frontend
     build: ./frontend
     ports:
       - "80:80"
