@@ -3,12 +3,14 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSummary, deleteSummary, updateSummary } from "../api/summaries";
 import { listThemes } from "../api/themes";
+import { useConfirm } from "../components/ConfirmDialog";
 import styles from "./SummaryDetailPage.module.css";
 
 export default function SummaryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [showTranscript, setShowTranscript] = useState(false);
 
   const { data: summary, isLoading } = useQuery({
@@ -122,7 +124,11 @@ export default function SummaryDetailPage() {
 
           <button
             className={styles.btnDanger}
-            onClick={() => { if (confirm("Supprimer cette synthèse ?")) deleteMutation.mutate(); }}
+            onClick={async () => {
+              if (await confirm("Supprimer cette synthèse ?", { confirmLabel: "Supprimer", danger: true })) {
+                deleteMutation.mutate();
+              }
+            }}
             disabled={deleteMutation.isPending}
           >
             Supprimer

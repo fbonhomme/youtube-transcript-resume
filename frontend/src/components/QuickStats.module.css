@@ -7,4 +7,4 @@
 @media (max-width: 720px) {
   .row { grid-template-columns: 1fr; }
 }
-.text { display: flex; flex-direction: column; gap: 2px; }
+.text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }

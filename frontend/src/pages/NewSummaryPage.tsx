@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { createSummary } from "../api/summaries";
 import { listThemes } from "../api/themes";
 import { listPrompts } from "../api/prompts";
@@ -28,21 +29,41 @@ export default function NewSummaryPage() {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [elapsed, setElapsed] = useState(0);
+  const abortRef = useRef<AbortController | null>(null);
 
   const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
   const { data: prompts = [] } = useQuery({ queryKey: ["prompts"], queryFn: listPrompts });
 
   const mutation = useMutation({
-    mutationFn: createSummary,
+    mutationFn: (payload: Parameters<typeof createSummary>[0]) => {
+      const controller = new AbortController();
+      abortRef.current = controller;
+      return createSummary(payload, controller.signal);
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["summaries"] });
       navigate(`/library/${data.id}`);
     },
     onError: (err: unknown) => {
+      if (axios.isCancel(err)) { setError(""); return; }
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       setError(msg ?? "Une erreur est survenue.");
     },
   });
+
+  useEffect(() => {
+    if (!mutation.isPending) { setElapsed(0); return; }
+    const start = Date.now();
+    const id = setInterval(() => setElapsed(Math.round((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [mutation.isPending]);
+
+  const stage = elapsed < 8
+    ? "Récupération du transcript…"
+    : "Génération de la synthèse par IA…";
+
+  const handleCancel = () => abortRef.current?.abort();
 
   const addTag = () => {
     const t = tagInput.trim();
@@ -170,8 +191,17 @@ export default function NewSummaryPage() {
             <><span className={styles.spinner} /> Génération en cours…</>
           ) : "Générer la synthèse"}
         </button>
+
         {mutation.isPending && (
-          <p className={styles.hint}>La synthèse peut prendre 30 à 60 secondes selon la durée de la vidéo.</p>
+          <div className={styles.progress} role="status" aria-live="polite">
+            <div className={styles.progressBar}><div className={styles.progressFill} /></div>
+            <div className={styles.progressRow}>
+              <span className={styles.stage}>{stage}</span>
+              <span className={styles.elapsed}>{elapsed}s</span>
+            </div>
+            <p className={styles.hint}>La synthèse peut prendre 30 à 60 secondes selon la durée de la vidéo.</p>
+            <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Annuler</button>
+          </div>
         )}
       </form>
     </div>

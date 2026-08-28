@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listThemes, createTheme, updateTheme, deleteTheme } from "../api/themes";
 import type { Theme } from "../api/themes";
+import { useConfirm } from "../components/ConfirmDialog";
 import styles from "./ThemeManagerPage.module.css";
 
 const COLORS = ["#6366f1","#f43f5e","#10b981","#f59e0b","#3b82f6","#8b5cf6","#ec4899","#14b8a6"];
@@ -65,6 +66,7 @@ function ThemeForm({
 
 export default function ThemeManagerPage() {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
@@ -127,7 +129,15 @@ export default function ThemeManagerPage() {
                       <button className={styles.btnGhost} onClick={() => setEditingId(t.id)}>Modifier</button>
                       <button
                         className={styles.btnGhostDanger}
-                        onClick={() => { if (confirm(`Supprimer "${t.name}" ?`)) deleteMutation.mutate(t.id); }}
+                        onClick={async () => {
+                          const count = t.summary_count;
+                          const message = count > 0
+                            ? `Supprimer "${t.name}" ? ${count} synthèse${count !== 1 ? "s" : ""} ${count !== 1 ? "seront détachées" : "sera détachée"}.`
+                            : `Supprimer "${t.name}" ?`;
+                          if (await confirm(message, { confirmLabel: "Supprimer", danger: true })) {
+                            deleteMutation.mutate(t.id);
+                          }
+                        }}
                       >
                         Supprimer
                       </button>
