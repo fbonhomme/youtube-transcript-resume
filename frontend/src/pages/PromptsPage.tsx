@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listPrompts, createPrompt, updatePrompt, deletePrompt } from "../api/prompts";
 import type { Prompt } from "../api/prompts";
+import { useConfirm } from "../components/ConfirmDialog";
 import styles from "./PromptsPage.module.css";
 
 const DEFAULT_SYSTEM_PROMPT = `You are an expert at synthesizing YouTube video content from transcripts.
@@ -104,6 +105,7 @@ function PromptForm({
 
 export default function PromptsPage() {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [error, setError] = useState("");
@@ -189,7 +191,11 @@ export default function PromptsPage() {
                       </button>
                       <button
                         className={styles.btnGhostDanger}
-                        onClick={() => { if (confirm(`Supprimer "${p.name}" ?`)) deleteMutation.mutate(p.id); }}
+                        onClick={async () => {
+                          if (await confirm(`Supprimer "${p.name}" ?`, { confirmLabel: "Supprimer", danger: true })) {
+                            deleteMutation.mutate(p.id);
+                          }
+                        }}
                       >
                         Supprimer
                       </button>

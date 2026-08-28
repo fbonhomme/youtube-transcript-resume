@@ -7,6 +7,14 @@ interface Props {
   index?: number;
 }
 
+function tagColorIndex(tag: string): number {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i++) {
+    hash = (hash * 31 + tag.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % 4;
+}
+
 export default function SummaryCard({ summary, index = 0 }: Props) {
   const thumb = `https://img.youtube.com/vi/${summary.youtube_id}/mqdefault.jpg`;
   const thumbFallback = `https://img.youtube.com/vi/${summary.youtube_id}/hqdefault.jpg`;
@@ -42,8 +50,8 @@ export default function SummaryCard({ summary, index = 0 }: Props) {
         <p className={styles.excerpt}>{summary.summary_short}</p>
         <div className={styles.footer}>
           <span className={styles.date}>{date}</span>
-          {summary.tags.slice(0, 2).map((t, ti) => (
-            <span key={t} className={`${styles.tag} ${styles[`tag${ti % 4}`]}`}>{t}</span>
+          {summary.tags.slice(0, 2).map((t) => (
+            <span key={t} className={`${styles.tag} ${styles[`tag${tagColorIndex(t)}`]}`}>{t}</span>
           ))}
         </div>
       </div>

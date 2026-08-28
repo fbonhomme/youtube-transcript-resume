@@ -43,8 +43,8 @@ export interface SearchResult {
   total: number;
 }
 
-export const createSummary = (payload: SummarizeRequest) =>
-  api.post<SummaryOut>("/summaries/", payload).then((r) => r.data);
+export const createSummary = (payload: SummarizeRequest, signal?: AbortSignal) =>
+  api.post<SummaryOut>("/summaries/", payload, { signal }).then((r) => r.data);
 
 export const listSummaries = (params?: { theme_id?: number; skip?: number; limit?: number }) =>
   api.get<SummaryListItem[]>("/summaries/", { params }).then((r) => r.data);
