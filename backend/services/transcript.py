@@ -20,6 +20,23 @@ def extract_video_id(url: str) -> str:
     raise ValueError(f"Impossible d'extraire l'ID vidéo depuis : {url}")
 
 
+async def fetch_title(url: str, video_id: str) -> str:
+    # Titre : on s'appuie sur l'API publique oEmbed (pas de clé requise)
+    import httpx
+    title = f"Vidéo YouTube ({video_id})"
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get(
+                "https://www.youtube.com/oembed",
+                params={"url": url, "format": "json"},
+            )
+            if resp.status_code == 200:
+                title = resp.json().get("title", title)
+    except Exception:
+        pass
+    return title
+
+
 async def fetch_transcript(url: str) -> dict:
     video_id = extract_video_id(url)
     try:
@@ -39,18 +56,6 @@ async def fetch_transcript(url: str) -> dict:
     except NoTranscriptFound:
         raise ValueError("Aucun transcript disponible pour cette vidéo.")
 
-    # Titre : on s'appuie sur l'API publique oEmbed (pas de clé requise)
-    import httpx
-    title = f"Vidéo YouTube ({video_id})"
-    try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            resp = await client.get(
-                "https://www.youtube.com/oembed",
-                params={"url": url, "format": "json"},
-            )
-            if resp.status_code == 200:
-                title = resp.json().get("title", title)
-    except Exception:
-        pass
+    title = await fetch_title(url, video_id)
 
     return {"video_id": video_id, "title": title, "transcript": full_text}

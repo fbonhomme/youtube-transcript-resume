@@ -42,6 +42,9 @@ export default function Layout() {
           <NavLink to="/new" className={({ isActive }) => isActive ? styles.active : ""}>
             + Nouvelle
           </NavLink>
+          <NavLink to="/import" className={({ isActive }) => isActive ? styles.active : ""}>
+            Importer
+          </NavLink>
           <NavLink to="/themes" className={({ isActive }) => isActive ? styles.active : ""}>
             Thèmes
           </NavLink>
