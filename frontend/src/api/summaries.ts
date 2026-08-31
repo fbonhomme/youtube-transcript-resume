@@ -60,8 +60,16 @@ export const updateSummary = (
 export const deleteSummary = (id: number) =>
   api.delete(`/summaries/${id}`);
 
-export const searchSummaries = (params: { q?: string; theme_id?: number; skip?: number; limit?: number }) =>
+export const searchSummaries = (params: { q?: string; theme_id?: number; tag?: string; skip?: number; limit?: number }) =>
   api.get<SearchResult>("/search/", { params }).then((r) => r.data);
+
+export interface TagCount {
+  name: string;
+  count: number;
+}
+
+export const listTagCounts = () =>
+  api.get<TagCount[]>("/search/tags").then((r) => r.data);
 
 export interface ImportPreviewItem {
   url: string;

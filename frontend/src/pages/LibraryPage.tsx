@@ -6,16 +6,18 @@ import SummaryCard from "../components/SummaryCard";
 import SearchBar from "../components/SearchBar";
 import QuickStats from "../components/QuickStats";
 import ThemeSidebar from "../components/ThemeSidebar";
+import TagCloud from "../components/TagCloud";
 import styles from "./LibraryPage.module.css";
 
 export default function LibraryPage() {
   const [q, setQ] = useState("");
   const [themeId, setThemeId] = useState<number | null>(null);
+  const [tag, setTag] = useState<string | null>(null);
 
   const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
   const { data, isLoading } = useQuery({
-    queryKey: ["summaries", q, themeId],
-    queryFn: () => searchSummaries({ q, theme_id: themeId ?? undefined }),
+    queryKey: ["summaries", q, themeId, tag],
+    queryFn: () => searchSummaries({ q, theme_id: themeId ?? undefined, tag: tag ?? undefined }),
   });
 
   const items = data?.items ?? [];
@@ -39,7 +41,7 @@ export default function LibraryPage() {
           <p className={styles.empty}>Chargement…</p>
         ) : items.length === 0 ? (
           <p className={styles.empty}>
-            {q || themeId ? "Aucun résultat." : "Aucune synthèse — commencez par en créer une."}
+            {q || themeId || tag ? "Aucun résultat." : "Aucune synthèse — commencez par en créer une."}
           </p>
         ) : (
           <div className={styles.grid}>
@@ -49,6 +51,8 @@ export default function LibraryPage() {
           </div>
         )}
       </section>
+
+      <TagCloud selected={tag} onSelect={setTag} />
     </div>
   );
 }
