@@ -37,12 +37,16 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
         # transcript désactivé / introuvable / URL invalide : erreur
         # attendue et actionnable côté client, pas un 500 opaque.
         raise HTTPException(status_code=422, detail=str(exc))
+
+    existing_tags = sorted({tag for (tags,) in db.query(Summary.tags).all() for tag in (tags or [])})
     result, usage = await generate_summary(
         transcript=transcript_data["transcript"],
         title=transcript_data["title"],
         language=payload.language,
         system_prompt=prompt.system_prompt if prompt else None,
+        existing_tags=existing_tags,
     )
+    tags = list(dict.fromkeys([*payload.tags, *result["tags"]]))
 
     summary = Summary(
         title=transcript_data["title"],
@@ -54,7 +58,7 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
         summary_long=result["summary_long"],
         key_points=result["key_points"],
         sections=result["sections"],
-        tags=payload.tags,
+        tags=tags,
         duration_read=result["duration_read"],
         theme_id=payload.theme_id,
         prompt_id=prompt.id if prompt else None,

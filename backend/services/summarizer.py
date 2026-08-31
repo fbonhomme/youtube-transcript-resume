@@ -32,6 +32,16 @@ Rules:
 - Respond ONLY with the JSON object, no markdown fences, no preamble
 """
 
+_TAGS_RULE = """
+
+En plus des champs ci-dessus, ajoute un champ "tags" à l'objet JSON : une liste \
+de 2 à 5 tags courts (1 à 3 mots) identifiant les technologies, outils, produits \
+ou thèmes clés abordés dans la vidéo. Réutilise en priorité un tag déjà existant \
+dans la bibliothèque (fourni séparément dans le message utilisateur) si le sujet \
+correspond, plutôt que d'en créer un proche en sens. Si aucun tag existant ne \
+convient, crée-en un nouveau, court et cohérent avec le style existant (noms \
+d'outils/produits tels quels, catégories génériques en français)."""
+
 _LANGUAGE_INSTRUCTIONS = {
     "fr": "Write the entire summary in French.",
     "en": "Write the entire summary in English.",
@@ -61,12 +71,16 @@ async def generate_summary(
     title: str,
     language: str = "fr",
     system_prompt: str | None = None,
+    existing_tags: list[str] | None = None,
 ) -> tuple[dict, dict]:
-    effective_prompt = system_prompt if system_prompt is not None else _SYSTEM_PROMPT
+    base_prompt = system_prompt if system_prompt is not None else _SYSTEM_PROMPT
+    effective_prompt = base_prompt + _TAGS_RULE
     lang_instruction = _LANGUAGE_INSTRUCTIONS.get(language, _LANGUAGE_INSTRUCTIONS["fr"])
+    tags_hint = ", ".join(sorted(existing_tags)) if existing_tags else "(aucun pour le moment)"
     user_message = (
         f"Video title: {title}\n\n"
         f"Language instruction: {lang_instruction}\n\n"
+        f"Tags déjà existants dans la bibliothèque : {tags_hint}\n\n"
         f"Transcript:\n{transcript}"
     )
 
@@ -114,6 +128,9 @@ async def generate_summary(
 
     result = json.loads(json_str)
 
+    raw_tags = [str(t).strip() for t in result.get("tags", []) if str(t).strip()]
+    tags = list(dict.fromkeys(raw_tags))[:5]
+
     summary_data = {
         "summary_short": str(result.get("summary_short", "")),
         "summary_long": str(result.get("summary_long", "")),
@@ -123,6 +140,7 @@ async def generate_summary(
             for s in result.get("sections", [])
         ],
         "duration_read": int(result.get("duration_read", 5)),
+        "tags": tags,
     }
 
     return summary_data, usage_data
