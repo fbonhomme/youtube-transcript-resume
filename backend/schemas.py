@@ -143,6 +143,20 @@ class SummaryUpdate(BaseModel):
         return v
 
 
+# ── Import ───────────────────────────────────────────────────────────────────
+
+class ImportPreviewItem(BaseModel):
+    url: str
+    video_id: str = ""
+    title: str = ""
+    already_imported: bool = False
+    error: Optional[str] = None
+
+
+class ImportPreviewResult(BaseModel):
+    items: list[ImportPreviewItem]
+
+
 # ── Stats ─────────────────────────────────────────────────────────────────────
 
 class StatsOut(BaseModel):

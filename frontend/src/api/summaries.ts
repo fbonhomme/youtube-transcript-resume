@@ -62,3 +62,28 @@ export const deleteSummary = (id: number) =>
 
 export const searchSummaries = (params: { q?: string; theme_id?: number; skip?: number; limit?: number }) =>
   api.get<SearchResult>("/search/", { params }).then((r) => r.data);
+
+export interface ImportPreviewItem {
+  url: string;
+  video_id: string;
+  title: string;
+  already_imported: boolean;
+  error: string | null;
+}
+
+export interface ImportPreviewResult {
+  items: ImportPreviewItem[];
+}
+
+export const importPreview = (file: File) => {
+  const form = new FormData();
+  form.append("file", file);
+  return api
+    .post<ImportPreviewResult>("/summaries/import/preview", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then((r) => r.data);
+};
+
+export const exportSummariesUrl = (themeId?: number | null) =>
+  themeId ? `/summaries/export?theme_id=${themeId}` : "/summaries/export";

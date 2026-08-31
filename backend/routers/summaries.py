@@ -1,10 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
 from models import Prompt, Summary, Theme
-from schemas import SummarizeRequest, SummaryListItem, SummaryOut, SummaryUpdate
-from services.transcript import fetch_transcript
+from schemas import (
+    ImportPreviewItem,
+    ImportPreviewResult,
+    SummarizeRequest,
+    SummaryListItem,
+    SummaryOut,
+    SummaryUpdate,
+)
+from services.transcript import extract_video_id, fetch_title, fetch_transcript
 from services.summarizer import generate_summary
 
 router = APIRouter()
@@ -71,6 +79,51 @@ def list_summaries(
     if theme_id is not None:
         q = q.filter(Summary.theme_id == theme_id)
     return q.order_by(Summary.created_at.desc()).offset(skip).limit(limit).all()
+
+
+@router.post("/import/preview", response_model=ImportPreviewResult)
+async def import_preview(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    raw = (await file.read()).decode("utf-8", errors="ignore")
+    lines = [line.strip() for line in raw.splitlines() if line.strip()]
+
+    existing = {s.youtube_id: s.title for s in db.query(Summary.youtube_id, Summary.title).all()}
+
+    items: list[ImportPreviewItem] = []
+    seen: set[str] = set()
+    for url in lines:
+        try:
+            video_id = extract_video_id(url)
+        except ValueError:
+            items.append(ImportPreviewItem(url=url, error="URL YouTube invalide"))
+            continue
+        if video_id in seen:
+            continue
+        seen.add(video_id)
+
+        already_imported = video_id in existing
+        title = existing[video_id] if already_imported else await fetch_title(url, video_id)
+        items.append(ImportPreviewItem(
+            url=url,
+            video_id=video_id,
+            title=title,
+            already_imported=already_imported,
+        ))
+
+    return ImportPreviewResult(items=items)
+
+
+@router.get("/export")
+def export_summaries(theme_id: int | None = None, db: Session = Depends(get_db)):
+    q = db.query(Summary)
+    if theme_id is not None:
+        q = q.filter(Summary.theme_id == theme_id)
+    urls = [s.youtube_url for s in q.order_by(Summary.created_at.desc()).all()]
+    content = "\n".join(urls) + ("\n" if urls else "")
+    return PlainTextResponse(
+        content,
+        media_type="text/plain",
+        headers={"Content-Disposition": "attachment; filename=youtube_urls.txt"},
+    )
 
 
 @router.get("/{summary_id}", response_model=SummaryOut)
