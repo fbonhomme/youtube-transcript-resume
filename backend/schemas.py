@@ -173,3 +173,8 @@ class StatsOut(BaseModel):
 class SearchResult(BaseModel):
     items: list[SummaryListItem]
     total: int
+
+
+class TagCount(BaseModel):
+    name: str
+    count: int

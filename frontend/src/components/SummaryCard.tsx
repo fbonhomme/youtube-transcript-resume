@@ -1,18 +1,11 @@
 import { Link } from "react-router-dom";
 import type { SummaryListItem } from "../api/summaries";
+import { tagColorIndex } from "../lib/tagColor";
 import styles from "./SummaryCard.module.css";
 
 interface Props {
   summary: SummaryListItem;
   index?: number;
-}
-
-function tagColorIndex(tag: string): number {
-  let hash = 0;
-  for (let i = 0; i < tag.length; i++) {
-    hash = (hash * 31 + tag.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash) % 4;
 }
 
 export default function SummaryCard({ summary, index = 0 }: Props) {
