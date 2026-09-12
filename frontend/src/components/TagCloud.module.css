@@ -4,6 +4,8 @@
   gap: 12px;
   width: 220px;
   flex-shrink: 0;
+  position: sticky;
+  top: calc(var(--nav-h) + 24px);
 }
 
 .label {
@@ -51,5 +53,6 @@
 @media (max-width: 1024px) {
   .sidebar {
     width: auto;
+    position: static;
   }
 }
