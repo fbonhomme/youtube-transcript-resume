@@ -29,6 +29,7 @@ function KeyRow({ status, canSave }: { status: ApiKeyStatus; canSave: boolean })
 
   const save = useMutation({
     mutationFn: () => saveApiKey(status.provider, value),
+    onMutate: () => setError(""),
     onSuccess: () => { setValue(""); setError(""); setTestResult(null); refresh(); },
     onError: (err) => {
       const detail = errorDetail(err);
@@ -37,11 +38,22 @@ function KeyRow({ status, canSave }: { status: ApiKeyStatus; canSave: boolean })
   });
   const remove = useMutation({
     mutationFn: () => deleteApiKey(status.provider),
+    onMutate: () => setError(""),
     onSuccess: () => { setTestResult(null); refresh(); },
+    onError: (err) => {
+      const detail = errorDetail(err);
+      setError(typeof detail === "string" ? detail : "Suppression impossible.");
+    },
   });
   const test = useMutation({
     mutationFn: () => testApiKey(status.provider),
+    onMutate: () => setError(""),
     onSuccess: setTestResult,
+    onError: (err) => {
+      setTestResult(null);
+      const detail = errorDetail(err);
+      setError(typeof detail === "string" ? detail : "Test impossible.");
+    },
   });
 
   return (
@@ -53,7 +65,8 @@ function KeyRow({ status, canSave }: { status: ApiKeyStatus; canSave: boolean })
       </div>
       {status.unreadable && (
         <p className={styles.warning}>
-          La clé saisie ici est illisible (APP_SECRET_KEY a changé) : elle est ignorée. Saisissez-la de nouveau.
+          La clé saisie ici est illisible (APP_SECRET_KEY absente ou modifiée) : elle est ignorée. Saisissez-la de
+          nouveau après avoir rétabli APP_SECRET_KEY.
         </p>
       )}
       <form
@@ -64,10 +77,11 @@ function KeyRow({ status, canSave }: { status: ApiKeyStatus; canSave: boolean })
           type="password"
           autoComplete="off"
           name={`key-${status.provider}`}
+          aria-label={`Clé API ${status.label}`}
           className={styles.input}
           placeholder={status.source === "none" ? "Coller la clé API" : "Nouvelle clé (remplace l'actuelle)"}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => { setValue(e.target.value); setError(""); }}
           disabled={!canSave || save.isPending}
         />
         <button type="submit" className={`${styles.btnPrimary} u-pill-btn`} disabled={!canSave || !value.trim() || save.isPending}>
