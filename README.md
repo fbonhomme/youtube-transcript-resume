@@ -27,7 +27,7 @@ python --version   # 3.12+
 node --version     # 20+
 ```
 
-- Clé API [Anthropic](https://console.anthropic.com/) (compte avec crédits)
+- Une clé API [Anthropic](https://console.anthropic.com/) (compte avec crédits), [OpenRouter](https://openrouter.ai/) ou [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) — renseignée dans `backend/.env` **ou** depuis la page Administration une fois l'application lancée (voir plus bas)
 - (Optionnel) Docker + Docker Compose pour le déploiement conteneurisé
 
 ---
@@ -36,7 +36,9 @@ node --version     # 20+
 
 ```bash
 cp backend/.env.example backend/.env
-# Éditer backend/.env et renseigner ANTHROPIC_API_KEY=sk-ant-...
+# Éditer backend/.env et renseigner APP_SECRET_KEY (voir génération plus bas),
+# et au moins une clé fournisseur — ou laisser vide et la saisir plus tard
+# depuis la page Administration.
 
 docker compose build
 docker compose up -d
@@ -64,7 +66,8 @@ git clone <url-du-repo>
 cd youtube-transcript-resume
 
 cp backend/.env.example backend/.env
-# Éditer backend/.env et renseigner ANTHROPIC_API_KEY=sk-ant-...
+# Éditer backend/.env : APP_SECRET_KEY (voir génération plus bas) et au moins
+# une clé fournisseur — ou laisser vide et la saisir depuis l'Administration.
 ```
 
 ### 2. Backend
@@ -180,8 +183,22 @@ Fichier `backend/.env` :
 
 | Variable | Description | Défaut |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Clé API Anthropic (obligatoire) | — |
+| `ANTHROPIC_API_KEY` | Clé API Anthropic (optionnelle si saisie dans l'Administration) | — |
+| `OPENROUTER_API_KEY` | Clé API OpenRouter, utilisée pour les modèles OpenRouter et pour Jev (optionnelle si saisie dans l'Administration) | — |
+| `AI_GATEWAY_API_KEY` | Clé API Vercel AI Gateway, secours de Jev si pas de clé OpenRouter (optionnelle si saisie dans l'Administration) | — |
+| `APP_SECRET_KEY` | Clé Fernet chiffrant les clés API saisies dans l'Administration. À générer une fois : `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` | — |
 | `DATABASE_URL` | URL SQLAlchemy | `sqlite:///./yt_summaries.db` |
+
+Aucune clé fournisseur n'est à proprement parler obligatoire dans `.env` : la clé saisie dans l'interface d'Administration est toujours prioritaire sur celle du `.env`, qui peut alors rester vide.
+
+### Page Administration
+
+La page Administration permet de saisir, tester et supprimer les clés API des fournisseurs (Anthropic, OpenRouter, Vercel AI Gateway) sans toucher au `.env`, ni redémarrer le backend. Elle n'est joignable que depuis la machine hôte :
+
+- Docker : `http://localhost:8080/admin` (port publié uniquement sur `127.0.0.1`)
+- Développement local : `http://localhost:5173/admin`
+
+Une clé saisie dans l'interface est stockée chiffrée en base (`APP_SECRET_KEY`) et prend toujours le pas sur la variable `.env` correspondante ; supprimer la clé de l'interface fait retomber sur le `.env` s'il en fournit une.
 
 ---
 
@@ -226,8 +243,8 @@ cd backend
 **"Les sous-titres sont désactivés pour cette vidéo" (422)**  
 → La vidéo n'a pas de transcript disponible. Essayer une autre vidéo ou vérifier que les sous-titres auto-générés sont activés sur YouTube.
 
-**"ANTHROPIC_API_KEY manquante" / erreur 500 à la génération**  
-→ Vérifier que `backend/.env` contient bien `ANTHROPIC_API_KEY=sk-ant-...` et que le backend a été redémarré après modification.
+**"Modèle indisponible : clé API manquante" à la génération**  
+→ Renseigner la clé du fournisseur concerné depuis la page Administration (`/admin`), ou dans `backend/.env` (`ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `AI_GATEWAY_API_KEY`) en redémarrant le backend après modification.
 
 **Port 8000 ou 5173 déjà utilisé**  
 ```bash
