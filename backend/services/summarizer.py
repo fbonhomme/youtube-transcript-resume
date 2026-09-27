@@ -91,22 +91,25 @@ def get_default_system_prompt() -> str:
 
 async def _call_anthropic(model_id: str, system_prompt: str, user_message: str) -> tuple[str, dict]:
     full_text = ""
-    async with _client.messages.stream(
-        model=model_id,
-        max_tokens=_MAX_TOKENS,
-        thinking={"type": "adaptive"},
-        system=[
-            {
-                "type": "text",
-                "text": system_prompt,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": user_message}],
-    ) as stream:
-        async for text in stream.text_stream:
-            full_text += text
-        final_msg = await stream.get_final_message()
+    try:
+        async with _client.messages.stream(
+            model=model_id,
+            max_tokens=_MAX_TOKENS,
+            thinking={"type": "adaptive"},
+            system=[
+                {
+                    "type": "text",
+                    "text": system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+            messages=[{"role": "user", "content": user_message}],
+        ) as stream:
+            async for text in stream.text_stream:
+                full_text += text
+            final_msg = await stream.get_final_message()
+    except anthropic.APIError as exc:
+        raise SummaryGenerationError(f"Anthropic a renvoyé une erreur : {exc}") from exc
 
     usage = final_msg.usage
     input_tok = getattr(usage, "input_tokens", 0) or 0
@@ -149,9 +152,13 @@ async def _call_openrouter(model_id: str, system_prompt: str, user_message: str)
         raise SummaryGenerationError(
             f"OpenRouter a refusé la requête ({resp.status_code}) : {_openrouter_error(resp)}"
         )
-    data = resp.json()
+    try:
+        data = resp.json()
+        content = data["choices"][0]["message"].get("content") or ""
+    except (ValueError, KeyError, IndexError, TypeError) as exc:
+        raise SummaryGenerationError("OpenRouter a renvoyé une réponse inattendue") from exc
     usage = data.get("usage") or {}
-    return data["choices"][0]["message"].get("content") or "", {
+    return content, {
         "input_tokens": usage.get("prompt_tokens", 0) or 0,
         "output_tokens": usage.get("completion_tokens", 0) or 0,
         "cost_usd": round(float(usage.get("cost") or 0.0), 6),

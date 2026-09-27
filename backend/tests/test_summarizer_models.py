@@ -1,5 +1,6 @@
 import json
 
+import anthropic
 import httpx
 import pytest
 
@@ -103,6 +104,25 @@ async def test_openrouter_network_error_raises(monkeypatch):
     monkeypatch.setattr(summarizer, "_openrouter_transport", httpx.MockTransport(handler))
     with pytest.raises(SummaryGenerationError, match="OpenRouter injoignable"):
         await generate_summary("t", "T", model=_OPENROUTER)
+
+
+@pytest.mark.anyio
+async def test_openrouter_malformed_body_raises(openrouter):
+    openrouter["reply"] = httpx.Response(200, json={"unexpected": True})
+    with pytest.raises(SummaryGenerationError, match="réponse inattendue"):
+        await generate_summary("t", "T", model=_OPENROUTER)
+
+
+@pytest.mark.anyio
+async def test_anthropic_api_error_raises(monkeypatch):
+    def raise_stream(**kwargs):
+        raise anthropic.APIConnectionError(
+            request=httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        )
+
+    monkeypatch.setattr(summarizer._client.messages, "stream", raise_stream)
+    with pytest.raises(SummaryGenerationError, match="Anthropic a renvoyé une erreur"):
+        await generate_summary("t", "T")
 
 
 # ── Route ────────────────────────────────────────────────────────────────────
