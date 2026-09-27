@@ -9,3 +9,4 @@ youtube-transcript-api==1.2.4
 anthropic==0.102.0
 httpx==0.28.1
 python-multipart==0.0.20
+cryptography==50.0.1

@@ -11,8 +11,9 @@ from sqlalchemy.pool import StaticPool
 
 from database import Base, get_db
 from main import app
+from services import api_keys
 
-# Module-scoped on purpose: shared in-memory DB via StaticPool; schema is created/dropped per test by the db_session fixture.
+# Module-scoped on purpose: shared in-memory DB via StaticPool; schema is created/dropped per test.
 _engine = create_engine(
     "sqlite://",
     connect_args={"check_same_thread": False},
@@ -20,16 +21,24 @@ _engine = create_engine(
 )
 _TestingSession = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
 
+# Les services qui ouvrent leur propre session (clés API) utilisent aussi la base de test.
+api_keys._session_factory = _TestingSession
+
+
+@pytest.fixture(autouse=True)
+def _schema():
+    Base.metadata.create_all(bind=_engine)
+    yield
+    Base.metadata.drop_all(bind=_engine)
+
 
 @pytest.fixture
 def db_session():
-    Base.metadata.create_all(bind=_engine)
     session = _TestingSession()
     try:
         yield session
     finally:
         session.close()
-        Base.metadata.drop_all(bind=_engine)
 
 
 @pytest.fixture

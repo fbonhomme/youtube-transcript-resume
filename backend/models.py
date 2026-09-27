@@ -67,3 +67,17 @@ class Summary(Base):
     prompt = relationship("Prompt", back_populates="summaries")
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class AppSetting(Base):
+    """Réglage modifiable depuis l'administration (valeurs sensibles chiffrées)."""
+
+    __tablename__ = "app_settings"
+
+    key = Column(String(100), primary_key=True)
+    value = Column(Text, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
