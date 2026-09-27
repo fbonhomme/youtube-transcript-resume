@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import Base, engine
-from routers import summaries, themes, search, prompts, stats, models
+from routers import summaries, themes, search, prompts, stats, models, admin
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,6 +21,7 @@ app.include_router(search.router, prefix="/search", tags=["search"])
 app.include_router(prompts.router, prefix="/prompts", tags=["prompts"])
 app.include_router(stats.router, prefix="/stats", tags=["stats"])
 app.include_router(models.router, prefix="/models", tags=["models"])
+app.include_router(admin.router, prefix="/admin-api", tags=["admin"])
 
 
 @app.get("/health")

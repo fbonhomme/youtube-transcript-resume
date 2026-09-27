@@ -209,3 +209,35 @@ class SearchResult(BaseModel):
 class TagCount(BaseModel):
     name: str
     count: int
+
+
+# ── Administration ───────────────────────────────────────────────────────────
+
+class ApiKeyStatus(BaseModel):
+    provider: str
+    label: str
+    source: str  # "interface" | "env" | "none"
+    masked: Optional[str]
+    unreadable: bool
+
+
+class AdminKeysOut(BaseModel):
+    encryption_ready: bool
+    keys: list[ApiKeyStatus]
+
+
+class ApiKeyIn(BaseModel):
+    value: str
+
+    @field_validator("value")
+    @classmethod
+    def strip_and_require(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("La clé ne peut pas être vide")
+        return v
+
+
+class ApiKeyTestResult(BaseModel):
+    ok: bool
+    message: str
