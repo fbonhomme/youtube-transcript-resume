@@ -51,6 +51,7 @@ class Summary(Base):
     input_tokens = Column(Integer, nullable=True)
     output_tokens = Column(Integer, nullable=True)
     cost_usd = Column(Float, nullable=True)
+    model = Column(String(100), nullable=True)  # id du catalogue services/llm_models.py
     feedback = Column(Integer, nullable=True)  # 1 = like, -1 = dislike, NULL = neutre
 
     # Analyse Jev : notes 0–3 par critère, et thème suggéré quand la confiance

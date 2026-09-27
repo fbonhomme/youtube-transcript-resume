@@ -18,6 +18,7 @@ from schemas import (
 )
 from services.transcript import extract_video_id, fetch_title, fetch_transcript
 from services import evaluator
+from services.llm_models import DEFAULT_MODEL, get_model, is_available
 from services.summarizer import generate_summary
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,15 @@ def _load_summary(db: Session, summary_id: int) -> Summary:
 
 @router.post("/", response_model=SummaryOut, status_code=201)
 async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
+    llm = get_model(payload.model or DEFAULT_MODEL)
+    if llm is None:
+        raise HTTPException(status_code=422, detail=f"Modèle inconnu : {payload.model}")
+    if not is_available(llm):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Modèle indisponible : clé API manquante pour {llm.label}",
+        )
+
     if payload.theme_id and not db.get(Theme, payload.theme_id):
         raise HTTPException(status_code=404, detail="Thème introuvable")
 
