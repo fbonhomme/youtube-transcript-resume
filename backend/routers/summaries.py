@@ -19,7 +19,7 @@ from schemas import (
 from services.transcript import extract_video_id, fetch_title, fetch_transcript
 from services import evaluator
 from services.llm_models import DEFAULT_MODEL, get_model, is_available
-from services.summarizer import generate_summary
+from services.summarizer import SummaryGenerationError, generate_summary
 
 logger = logging.getLogger(__name__)
 
@@ -63,13 +63,17 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=422, detail=str(exc))
 
     existing_tags = sorted({tag for (tags,) in db.query(Summary.tags).all() for tag in (tags or [])})
-    result, usage = await generate_summary(
-        transcript=transcript_data["transcript"],
-        title=transcript_data["title"],
-        language=payload.language,
-        system_prompt=prompt.system_prompt if prompt else None,
-        existing_tags=existing_tags,
-    )
+    try:
+        result, usage = await generate_summary(
+            transcript=transcript_data["transcript"],
+            title=transcript_data["title"],
+            language=payload.language,
+            system_prompt=prompt.system_prompt if prompt else None,
+            existing_tags=existing_tags,
+            model=llm.id,
+        )
+    except SummaryGenerationError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
     tags = list(dict.fromkeys([*payload.tags, *result["tags"]]))
 
     summary = Summary(
@@ -89,6 +93,7 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
         input_tokens=usage["input_tokens"],
         output_tokens=usage["output_tokens"],
         cost_usd=usage["cost_usd"],
+        model=llm.id,
     )
     if evaluator.is_enabled():
         # Jev est un bonus : une panne ne doit jamais faire perdre la synthèse.
