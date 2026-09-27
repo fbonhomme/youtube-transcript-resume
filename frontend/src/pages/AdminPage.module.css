@@ -1,0 +1,103 @@
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeUp .35s ease;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.card {
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card h2 {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text3);
+}
+
+.hint { font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
+.hint code, .warning code { font-family: var(--font-mono); font-size: 0.8rem; }
+
+.list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+}
+
+.rowHead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.label { font-weight: 600; color: var(--text); flex: 1; min-width: 180px; }
+
+.source {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.interface { color: var(--accent); border-color: var(--accent); }
+.none { color: var(--danger); border-color: var(--danger); }
+.env { color: var(--text2); }
+
+.masked { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text2); }
+
+.form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.input {
+  flex: 1;
+  min-width: 220px;
+  padding: 8px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+}
+.input:focus { border-color: var(--accent); }
+
+.btnPrimary { font-size: 0.85rem; }
+
+.btnGhost, .btnDanger {
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text3);
+  font-size: 0.8rem;
+}
+.btnGhost:hover { border-color: var(--accent); color: var(--text); }
+.btnDanger:hover { border-color: var(--danger); color: var(--danger); }
+
+.ok { font-size: 0.8rem; color: var(--accent); }
+.error { font-size: 0.8rem; color: var(--danger); }
+
+.warning {
+  font-size: 0.82rem;
+  color: var(--danger);
+  background: var(--danger-dim);
+  border: 1px solid rgba(255,68,102,.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}

@@ -51,6 +51,9 @@ export default function Layout() {
           <NavLink to="/prompts" className={({ isActive }) => isActive ? styles.active : ""}>
             Prompts
           </NavLink>
+          <NavLink to="/admin" className={({ isActive }) => isActive ? styles.active : ""}>
+            Admin
+          </NavLink>
         </div>
 
         <div className={styles.navRight}>
