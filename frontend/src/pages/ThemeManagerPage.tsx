@@ -193,7 +193,7 @@ export default function ThemeManagerPage() {
         {analyzeMutation.isError && (
           <p className={styles.error}>
             {(analyzeMutation.error as { response?: { status?: number } }).response?.status === 503
-              ? "Jev n'est pas configuré : renseignez AI_GATEWAY_API_KEY dans backend/.env."
+              ? "Jev n'est pas configuré : renseignez OPENROUTER_API_KEY dans backend/.env."
               : "L'analyse a échoué."}
           </p>
         )}

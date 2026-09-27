@@ -60,7 +60,7 @@ export default function SummaryDetailPage() {
   const confidencePct = summary.theme_confidence != null ? Math.round(summary.theme_confidence * 100) : null;
   const analyzeError = analyzeMutation.isError
     ? (analyzeMutation.error as { response?: { status?: number } }).response?.status === 503
-      ? "Jev n'est pas configuré (AI_GATEWAY_API_KEY)."
+      ? "Jev n'est pas configuré (OPENROUTER_API_KEY)."
       : "L'analyse Jev a échoué."
     : "";
 

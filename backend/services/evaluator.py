@@ -1,4 +1,5 @@
-"""Classement et notation des synthèses via Jev (typesafe-ai/jev) sur Vercel AI Gateway.
+"""Classement et notation des synthèses via Jev (TypeSafe), servi par OpenRouter
+ou par Vercel AI Gateway — même format de questions et de réponses.
 
 Jev ne génère pas de texte : il répond à des questions typées (choice / score)
 sur un état partagé, toutes évaluées en parallèle dans une seule requête.
@@ -7,8 +8,13 @@ import httpx
 
 from config import settings
 
-EVALUATE_URL = "https://ai-gateway.vercel.sh/v1/evaluate"
-MODEL = "typesafe-ai/jev"
+OPENROUTER_URL = "https://openrouter.ai/api/alpha/decisions"
+OPENROUTER_MODEL = "typesafe/jev-1.13"
+VERCEL_URL = "https://ai-gateway.vercel.sh/v1/evaluate"
+VERCEL_MODEL = "typesafe-ai/jev"
+
+# Transport httpx injectable pour les tests.
+_transport: httpx.AsyncBaseTransport | None = None
 
 # Au-dessus : thème appliqué d'office. Entre les deux : simple suggestion.
 AUTO_APPLY_THRESHOLD = 0.8
@@ -58,16 +64,29 @@ SCORE_CRITERIA: dict[str, tuple[str, list[str]]] = {
 }
 
 
+def _provider() -> tuple[str, str, str] | None:
+    """(url, modèle, clé) du fournisseur configuré, OpenRouter en priorité."""
+    if settings.openrouter_api_key:
+        return OPENROUTER_URL, OPENROUTER_MODEL, settings.openrouter_api_key
+    if settings.ai_gateway_api_key:
+        return VERCEL_URL, VERCEL_MODEL, settings.ai_gateway_api_key
+    return None
+
+
 def is_enabled() -> bool:
-    return bool(settings.ai_gateway_api_key)
+    return _provider() is not None
 
 
 async def evaluate(state: str, questions: dict) -> dict:
-    async with httpx.AsyncClient(timeout=30) as client:
+    provider = _provider()
+    if provider is None:
+        raise RuntimeError("Jev non configuré")
+    url, model, api_key = provider
+    async with httpx.AsyncClient(timeout=30, transport=_transport) as client:
         resp = await client.post(
-            EVALUATE_URL,
-            headers={"Authorization": f"Bearer {settings.ai_gateway_api_key}"},
-            json={"model": MODEL, "state": state, "questions": questions},
+            url,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json={"model": model, "state": state, "questions": questions},
         )
         resp.raise_for_status()
     return resp.json()["answers"]

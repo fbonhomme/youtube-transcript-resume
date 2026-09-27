@@ -1,3 +1,4 @@
+import httpx
 import pytest
 
 from models import Summary, Theme
@@ -31,8 +32,14 @@ def _answers(choice: str | None, prob: float = 0.9, scores: dict = _SCORES) -> d
 
 
 @pytest.fixture
-def jev_enabled(monkeypatch):
-    monkeypatch.setattr(evaluator.settings, "ai_gateway_api_key", "test-gateway-key")
+def jev_disabled(monkeypatch):
+    monkeypatch.setattr(evaluator.settings, "openrouter_api_key", "")
+    monkeypatch.setattr(evaluator.settings, "ai_gateway_api_key", "")
+
+
+@pytest.fixture
+def jev_enabled(jev_disabled, monkeypatch):
+    monkeypatch.setattr(evaluator.settings, "openrouter_api_key", "test-openrouter-key")
 
 
 def _fake_evaluate(monkeypatch, answers_or_exc):
@@ -91,6 +98,36 @@ def test_apply_analysis_keeps_existing_theme():
     assert s.theme_suggestion_id is None
 
 
+@pytest.mark.parametrize(
+    "openrouter_key, gateway_key, url, model, key",
+    [
+        ("or-key", "gw-key", evaluator.OPENROUTER_URL, "typesafe/jev-1.13", "or-key"),
+        ("", "gw-key", evaluator.VERCEL_URL, "typesafe-ai/jev", "gw-key"),
+    ],
+)
+@pytest.mark.anyio
+async def test_evaluate_calls_configured_provider(
+    monkeypatch, openrouter_key, gateway_key, url, model, key
+):
+    monkeypatch.setattr(evaluator.settings, "openrouter_api_key", openrouter_key)
+    monkeypatch.setattr(evaluator.settings, "ai_gateway_api_key", gateway_key)
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        seen["auth"] = request.headers["authorization"]
+        seen["body"] = request.read()
+        return httpx.Response(200, json={"answers": _answers(None), "usage": {"cost": 0.00002}})
+
+    monkeypatch.setattr(evaluator, "_transport", httpx.MockTransport(handler))
+    answers = await evaluator.evaluate("state", {"q": {"type": "score"}})
+
+    assert answers == _answers(None)
+    assert seen["url"] == url
+    assert seen["auth"] == f"Bearer {key}"
+    assert f'"model":"{model}"'.encode() in seen["body"].replace(b" ", b"")
+
+
 # ── Création d'une synthèse ──────────────────────────────────────────────────
 
 @pytest.fixture
@@ -139,8 +176,7 @@ def test_summarize_survives_jev_failure(client, fake_pipeline, jev_enabled, monk
     assert r.json()["scores"] is None
 
 
-def test_summarize_without_gateway_key_skips_jev(client, fake_pipeline, monkeypatch):
-    monkeypatch.setattr(evaluator.settings, "ai_gateway_api_key", "")
+def test_summarize_without_gateway_key_skips_jev(client, fake_pipeline, jev_disabled, monkeypatch):
     calls = _fake_evaluate(monkeypatch, _answers(None))
     r = client.post("/summaries/", json={"url": _URL})
     assert r.status_code == 201
@@ -149,8 +185,7 @@ def test_summarize_without_gateway_key_skips_jev(client, fake_pipeline, monkeypa
 
 # ── Ré-analyse ───────────────────────────────────────────────────────────────
 
-def test_analyze_requires_gateway_key(client, monkeypatch):
-    monkeypatch.setattr(evaluator.settings, "ai_gateway_api_key", "")
+def test_analyze_requires_gateway_key(client, jev_disabled):
     assert client.post("/summaries/analyze").status_code == 503
 
 
