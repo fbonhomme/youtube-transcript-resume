@@ -179,3 +179,23 @@ def test_key_test_network_error_does_not_leak_key(admin, secret, monkeypatch):
     assert body["ok"] is False
     assert body["message"].startswith("Fournisseur injoignable")
     assert _KEY not in body["message"]
+
+
+# ── Corps de requête malformé (422) ──────────────────────────────────────────
+
+def test_malformed_body_does_not_echo_key(admin, secret):
+    r = admin.put("/admin-api/keys/openrouter", json={"key": _KEY})
+    assert r.status_code == 422
+    assert _KEY not in r.text
+
+
+def test_bare_string_body_does_not_echo_key(admin, secret):
+    r = admin.put("/admin-api/keys/openrouter", json=_KEY)
+    assert r.status_code == 422
+    assert _KEY not in r.text
+
+
+def test_validation_errors_elsewhere_unchanged(client):
+    r = client.post("/summaries/", json={"url": "not-a-youtube-url"})
+    assert r.status_code == 422
+    assert any("input" in item for item in r.json()["detail"])
