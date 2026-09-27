@@ -41,6 +41,17 @@
   min-width: 200px;
 }
 
+.sort {
+  padding: 9px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+}
+.sort:focus { border-color: var(--accent); }
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

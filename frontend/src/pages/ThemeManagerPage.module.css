@@ -179,3 +179,20 @@
   border-radius: var(--radius-sm);
   padding: 8px 12px;
 }
+
+.fullWidth {
+  flex-basis: 100%;
+}
+
+.description {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+.hint {
+  font-size: 0.82rem;
+  color: var(--text2);
+  line-height: 1.5;
+}

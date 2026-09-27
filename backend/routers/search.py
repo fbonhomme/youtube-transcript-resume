@@ -1,5 +1,7 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends
-from sqlalchemy import String, cast, or_
+from sqlalchemy import Float, String, cast, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
@@ -7,6 +9,24 @@ from models import Summary
 from schemas import SearchResult, SummaryListItem, TagCount
 
 router = APIRouter()
+
+SortKey = Literal["recent", "top", "densite", "niveau", "actionnable", "perennite"]
+
+# Poids d'un like/dislike dans le score global (les notes Jev vont de 0 à 3).
+_FEEDBACK_WEIGHT = 1.5
+
+
+def _score(key: str):
+    return cast(func.json_extract(Summary.scores, f"$.{key}"), Float)
+
+
+def _sort_expression(sort: str):
+    if sort == "top":
+        return (
+            _score("densite") + _score("actionnable") + _score("perennite")
+            + func.coalesce(Summary.feedback, 0) * _FEEDBACK_WEIGHT
+        )
+    return _score(sort)
 
 
 @router.get("/", response_model=SearchResult)
@@ -16,6 +36,7 @@ def search(
     tag: str | None = None,
     skip: int = 0,
     limit: int = 50,
+    sort: SortKey = "recent",
     db: Session = Depends(get_db),
 ):
     query = db.query(Summary).options(joinedload(Summary.theme))
@@ -37,7 +58,13 @@ def search(
         query = query.filter(cast(Summary.tags, String).like(f'%"{tag}"%'))
 
     total = query.count()
-    items = query.order_by(Summary.created_at.desc()).offset(skip).limit(limit).all()
+    if sort == "recent":
+        order = [Summary.created_at.desc()]
+    else:
+        # Les synthèses pas encore notées par Jev passent en fin de liste.
+        expr = _sort_expression(sort)
+        order = [expr.is_(None), expr.desc(), Summary.created_at.desc()]
+    items = query.order_by(*order).offset(skip).limit(limit).all()
 
     return SearchResult(items=[SummaryListItem.model_validate(i) for i in items], total=total)
 

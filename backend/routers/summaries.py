@@ -1,3 +1,6 @@
+import asyncio
+import logging
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session, joinedload
@@ -5,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import Prompt, Summary, Theme
 from schemas import (
+    AnalyzeReport,
     ImportPreviewItem,
     ImportPreviewResult,
     SummarizeRequest,
@@ -13,9 +17,19 @@ from schemas import (
     SummaryUpdate,
 )
 from services.transcript import extract_video_id, fetch_title, fetch_transcript
+from services import evaluator
 from services.summarizer import generate_summary
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
+
+# Nombre d'appels Jev simultanés lors d'une ré-analyse de la bibliothèque.
+_ANALYZE_CONCURRENCY = 5
+
+
+def _load_summary(db: Session, summary_id: int) -> Summary:
+    return db.query(Summary).options(joinedload(Summary.theme)).filter(Summary.id == summary_id).first()
 
 
 @router.post("/", response_model=SummaryOut, status_code=201)
@@ -66,10 +80,56 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
         output_tokens=usage["output_tokens"],
         cost_usd=usage["cost_usd"],
     )
+    if evaluator.is_enabled():
+        # Jev est un bonus : une panne ne doit jamais faire perdre la synthèse.
+        try:
+            analysis = await evaluator.analyze_summary(summary, db.query(Theme).all())
+            evaluator.apply_analysis(summary, analysis)
+        except Exception:
+            logger.warning("Analyse Jev échouée pour %s", payload.url, exc_info=True)
     db.add(summary)
     db.commit()
     db.refresh(summary)
-    return db.query(Summary).options(joinedload(Summary.theme)).filter(Summary.id == summary.id).first()
+    return _load_summary(db, summary.id)
+
+
+def _require_jev() -> None:
+    if not evaluator.is_enabled():
+        raise HTTPException(status_code=503, detail="Jev non configuré (AI_GATEWAY_API_KEY manquante)")
+
+
+@router.post("/analyze", response_model=AnalyzeReport)
+async def analyze_library(db: Session = Depends(get_db)):
+    """Ré-analyse toute la bibliothèque : notes recalculées, thème proposé aux synthèses sans thème."""
+    _require_jev()
+    themes = db.query(Theme).all()
+    summaries = db.query(Summary).all()
+    semaphore = asyncio.Semaphore(_ANALYZE_CONCURRENCY)
+
+    async def _analyze(summary: Summary):
+        async with semaphore:
+            try:
+                return await evaluator.analyze_summary(summary, themes)
+            except Exception:
+                logger.warning("Analyse Jev échouée pour la synthèse %s", summary.id, exc_info=True)
+                return None
+
+    analyses = await asyncio.gather(*(_analyze(s) for s in summaries))
+
+    report = AnalyzeReport(analyzed=0, auto_classified=0, suggested=0, failed=0)
+    for summary, analysis in zip(summaries, analyses):
+        if analysis is None:
+            report.failed += 1
+            continue
+        had_theme = summary.theme_id is not None
+        evaluator.apply_analysis(summary, analysis)
+        report.analyzed += 1
+        if not had_theme and summary.theme_id is not None:
+            report.auto_classified += 1
+        elif summary.theme_suggestion_id is not None:
+            report.suggested += 1
+    db.commit()
+    return report
 
 
 @router.get("/", response_model=list[SummaryListItem])
@@ -143,6 +203,22 @@ def get_summary(summary_id: int, db: Session = Depends(get_db)):
     return summary
 
 
+@router.post("/{summary_id}/analyze", response_model=SummaryOut)
+async def analyze_one(summary_id: int, db: Session = Depends(get_db)):
+    _require_jev()
+    summary = db.get(Summary, summary_id)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Synthèse introuvable")
+    try:
+        analysis = await evaluator.analyze_summary(summary, db.query(Theme).all())
+    except Exception as exc:
+        logger.warning("Analyse Jev échouée pour la synthèse %s", summary_id, exc_info=True)
+        raise HTTPException(status_code=502, detail="Échec de l'analyse Jev") from exc
+    evaluator.apply_analysis(summary, analysis)
+    db.commit()
+    return _load_summary(db, summary_id)
+
+
 @router.patch("/{summary_id}", response_model=SummaryOut)
 def update_summary(summary_id: int, payload: SummaryUpdate, db: Session = Depends(get_db)):
     summary = db.get(Summary, summary_id)
@@ -150,11 +226,16 @@ def update_summary(summary_id: int, payload: SummaryUpdate, db: Session = Depend
         raise HTTPException(status_code=404, detail="Synthèse introuvable")
     if payload.theme_id is not None and not db.get(Theme, payload.theme_id):
         raise HTTPException(status_code=404, detail="Thème introuvable")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    changes = payload.model_dump(exclude_unset=True)
+    if "theme_id" in changes:
+        # Choix manuel du thème : la suggestion Jev n'a plus lieu d'être.
+        changes["theme_suggestion_id"] = None
+        changes["theme_confidence"] = None
+    for field, value in changes.items():
         setattr(summary, field, value)
     db.commit()
     db.refresh(summary)
-    return db.query(Summary).options(joinedload(Summary.theme)).filter(Summary.id == summary_id).first()
+    return _load_summary(db, summary_id)
 
 
 @router.delete("/{summary_id}", status_code=204)
