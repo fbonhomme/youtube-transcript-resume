@@ -4,7 +4,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 
-from services import llm_models
+from services import api_keys, llm_models
 
 _ANTHROPIC = "claude-opus-4-7"
 _OPENROUTER = "google/gemini-3.1-flash-lite"
@@ -13,12 +13,12 @@ _URL = "https://www.youtube.com/watch?v=abc"
 
 @pytest.fixture
 def openrouter_key(monkeypatch):
-    monkeypatch.setattr(llm_models.settings, "openrouter_api_key", "test-or-key")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "test-or-key")
 
 
 @pytest.fixture
 def no_openrouter_key(monkeypatch):
-    monkeypatch.setattr(llm_models.settings, "openrouter_api_key", "")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "")
 
 
 def test_catalog_default_is_first_and_known():

@@ -6,7 +6,7 @@ sur un état partagé, toutes évaluées en parallèle dans une seule requête.
 """
 import httpx
 
-from config import settings
+from services.api_keys import get_api_key
 
 OPENROUTER_URL = "https://openrouter.ai/api/alpha/decisions"
 OPENROUTER_MODEL = "typesafe/jev-1.13"
@@ -66,10 +66,12 @@ SCORE_CRITERIA: dict[str, tuple[str, list[str]]] = {
 
 def _provider() -> tuple[str, str, str] | None:
     """(url, modèle, clé) du fournisseur configuré, OpenRouter en priorité."""
-    if settings.openrouter_api_key:
-        return OPENROUTER_URL, OPENROUTER_MODEL, settings.openrouter_api_key
-    if settings.ai_gateway_api_key:
-        return VERCEL_URL, VERCEL_MODEL, settings.ai_gateway_api_key
+    openrouter_key = get_api_key("openrouter")
+    if openrouter_key:
+        return OPENROUTER_URL, OPENROUTER_MODEL, openrouter_key
+    gateway_key = get_api_key("ai_gateway")
+    if gateway_key:
+        return VERCEL_URL, VERCEL_MODEL, gateway_key
     return None
 
 

@@ -6,7 +6,7 @@ Catalogue vérifié le 2026-09-27 : sortie JSON supportée, contexte >= 400k.
 """
 from dataclasses import dataclass
 
-from config import settings
+from services.api_keys import get_api_key
 
 
 @dataclass(frozen=True)
@@ -36,6 +36,4 @@ def get_model(model_id: str) -> LLMModel | None:
 
 
 def is_available(model: LLMModel) -> bool:
-    if model.provider == "openrouter":
-        return bool(settings.openrouter_api_key)
-    return bool(settings.anthropic_api_key)
+    return bool(get_api_key("openrouter" if model.provider == "openrouter" else "anthropic"))
