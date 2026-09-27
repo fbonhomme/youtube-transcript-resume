@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator
@@ -235,6 +236,10 @@ class ApiKeyIn(BaseModel):
         v = v.strip()
         if not v:
             raise ValueError("La clé ne peut pas être vide")
+        if not re.fullmatch(r"[\x21-\x7e]+", v):
+            raise ValueError(
+                "La clé contient des caractères invalides (espaces, retours à la ligne ou caractères non ASCII)"
+            )
         return v
 
 

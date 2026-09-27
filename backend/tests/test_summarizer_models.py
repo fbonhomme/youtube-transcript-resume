@@ -100,12 +100,15 @@ async def test_openrouter_http_error_raises_with_message(openrouter):
 async def test_openrouter_network_error_raises(monkeypatch):
     monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "test-or-key")
 
+    _FAKE_KEY = "sk-or-fakekeyleak0000"
+
     def handler(request):
-        raise httpx.ConnectError("boom")
+        raise httpx.ConnectError(f"boom {_FAKE_KEY}")
 
     monkeypatch.setattr(summarizer, "_openrouter_transport", httpx.MockTransport(handler))
-    with pytest.raises(SummaryGenerationError, match="OpenRouter injoignable"):
+    with pytest.raises(SummaryGenerationError, match="OpenRouter injoignable") as exc_info:
         await generate_summary("t", "T", model=_OPENROUTER)
+    assert _FAKE_KEY not in str(exc_info.value)
 
 
 @pytest.mark.anyio

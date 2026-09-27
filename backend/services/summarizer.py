@@ -157,7 +157,10 @@ async def _call_openrouter(model_id: str, system_prompt: str, user_message: str)
                 },
             )
     except httpx.HTTPError as exc:
-        raise SummaryGenerationError(f"OpenRouter injoignable : {exc}") from exc
+        # Ne jamais inclure le texte de l'exception : il peut contenir la clé
+        # API en clair (ex. LocalProtocolError sur un en-tête Authorization
+        # malformé). Seul le type d'erreur est reporté, comme dans key_check.py.
+        raise SummaryGenerationError(f"OpenRouter injoignable : {type(exc).__name__}") from exc
     if resp.status_code != 200:
         raise SummaryGenerationError(
             f"OpenRouter a refusé la requête ({resp.status_code}) : {_openrouter_error(resp)}"

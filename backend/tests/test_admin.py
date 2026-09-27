@@ -12,7 +12,8 @@ _KEY = "sk-or-ui-abcdefghijklmnop4321"
 
 
 def _request(host: str, headers: dict[str, str] | None = None) -> Request:
-    raw = [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()]
+    merged = {"Host": "localhost", **(headers or {})}
+    raw = [(k.lower().encode(), v.encode()) for k, v in merged.items()]
     return Request({"type": "http", "client": (host, 50000), "headers": raw})
 
 
@@ -72,6 +73,36 @@ def test_admin_routes_forbidden_from_test_client(client, no_trust_proxy):
     assert "uniquement depuis cette machine" in r.json()["detail"]
 
 
+# ── Protection anti DNS rebinding (en-tête Host) ────────────────────────────
+
+def test_require_local_admin_rejects_loopback_with_foreign_host(no_trust_proxy):
+    with pytest.raises(HTTPException) as exc:
+        require_local_admin(_request("127.0.0.1", {"Host": "evil.example"}))
+    assert exc.value.status_code == 403
+
+
+def test_require_local_admin_accepts_loopback_with_port_in_host(no_trust_proxy):
+    require_local_admin(_request("127.0.0.1", {"Host": "localhost:8000"}))
+
+
+def test_require_local_admin_rejects_trusted_proxy_with_foreign_host(trust_proxy):
+    with pytest.raises(HTTPException) as exc:
+        require_local_admin(
+            _request("172.18.0.3", {"X-Admin-Access": "local", "Host": "attacker.tld:8080"})
+        )
+    assert exc.value.status_code == 403
+
+
+def test_require_local_admin_accepts_trusted_proxy_with_localhost_host(trust_proxy):
+    require_local_admin(
+        _request("172.18.0.3", {"X-Admin-Access": "local", "Host": "localhost:8080"})
+    )
+
+
+def test_require_local_admin_accepts_ipv6_loopback_with_bracketed_host(no_trust_proxy):
+    require_local_admin(_request("::1", {"Host": "[::1]:8080"}))
+
+
 # ── Clés ─────────────────────────────────────────────────────────────────────
 
 def test_list_keys(admin, secret):
@@ -104,6 +135,19 @@ def test_put_blank_key_returns_422(admin, secret):
 
 def test_put_unknown_provider_returns_404(admin, secret):
     assert admin.put("/admin-api/keys/nope", json={"value": _KEY}).status_code == 404
+
+
+def test_put_key_with_control_character_returns_422(admin, secret):
+    value = "sk-or-abc\ndef123456"
+    r = admin.put("/admin-api/keys/openrouter", json={"value": value})
+    assert r.status_code == 422
+    assert value not in r.text
+
+
+def test_put_key_with_non_ascii_returns_422(admin, secret):
+    value = "sk-or-…abc1234"
+    r = admin.put("/admin-api/keys/openrouter", json={"value": value})
+    assert r.status_code == 422
 
 
 def test_put_without_secret_returns_503(admin, monkeypatch):
