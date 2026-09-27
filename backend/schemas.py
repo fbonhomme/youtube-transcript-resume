@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator
@@ -209,3 +210,39 @@ class SearchResult(BaseModel):
 class TagCount(BaseModel):
     name: str
     count: int
+
+
+# ── Administration ───────────────────────────────────────────────────────────
+
+class ApiKeyStatus(BaseModel):
+    provider: str
+    label: str
+    source: str  # "interface" | "env" | "none"
+    masked: Optional[str]
+    unreadable: bool
+
+
+class AdminKeysOut(BaseModel):
+    encryption_ready: bool
+    keys: list[ApiKeyStatus]
+
+
+class ApiKeyIn(BaseModel):
+    value: str
+
+    @field_validator("value")
+    @classmethod
+    def strip_and_require(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("La clé ne peut pas être vide")
+        if not re.fullmatch(r"[\x21-\x7e]+", v):
+            raise ValueError(
+                "La clé contient des caractères invalides (espaces, retours à la ligne ou caractères non ASCII)"
+            )
+        return v
+
+
+class ApiKeyTestResult(BaseModel):
+    ok: bool
+    message: str

@@ -7,6 +7,7 @@ import ImportPage from "./pages/ImportPage";
 import SummaryDetailPage from "./pages/SummaryDetailPage";
 import ThemeManagerPage from "./pages/ThemeManagerPage";
 import PromptsPage from "./pages/PromptsPage";
+import AdminPage from "./pages/AdminPage";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/import" element={<ImportPage />} />
           <Route path="/themes" element={<ThemeManagerPage />} />
           <Route path="/prompts" element={<PromptsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
       </Routes>
     </ConfirmProvider>

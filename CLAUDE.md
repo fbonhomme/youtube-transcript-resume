@@ -66,8 +66,13 @@ Copier `backend/.env.example` → `backend/.env` et renseigner :
 
 | Variable | Description |
 |---|---|
-| `ANTHROPIC_API_KEY` | Clé API Anthropic (obligatoire) |
+| `ANTHROPIC_API_KEY` | Clé Anthropic (facultative si saisie dans l'Administration) |
+| `OPENROUTER_API_KEY` | Clé OpenRouter : modèles non-Claude et Jev (facultative si saisie dans l'Administration) |
+| `AI_GATEWAY_API_KEY` | Clé Vercel AI Gateway, secours pour Jev (facultative) |
+| `APP_SECRET_KEY` | Clé maître Fernet chiffrant les clés saisies dans l'Administration |
 | `DATABASE_URL` | défaut : `sqlite:///./yt_summaries.db` |
+
+Les clés peuvent être gérées dans la page **Administration**, accessible uniquement depuis la machine hôte : `http://localhost:8080/admin` (Docker, port lié à 127.0.0.1) ou `http://localhost:5173/admin` (dev). Une clé saisie là a priorité sur le `.env`.
 
 ## Migrations DB
 

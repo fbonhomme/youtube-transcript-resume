@@ -4,10 +4,20 @@ import re
 import anthropic
 import httpx
 
-from config import settings
+from services.api_keys import get_api_key
 from services.llm_models import DEFAULT_MODEL, get_model
 
-_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+_anthropic_clients: dict[str, anthropic.AsyncAnthropic] = {}
+
+
+def _anthropic_client() -> anthropic.AsyncAnthropic:
+    """Client Anthropic pour la clé en vigueur (recréé si la clé change)."""
+    key = get_api_key("anthropic")
+    client = _anthropic_clients.get(key)
+    if client is None:
+        _anthropic_clients.clear()
+        client = _anthropic_clients[key] = anthropic.AsyncAnthropic(api_key=key)
+    return client
 
 OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 _MAX_TOKENS = 16000
@@ -92,7 +102,7 @@ def get_default_system_prompt() -> str:
 async def _call_anthropic(model_id: str, system_prompt: str, user_message: str) -> tuple[str, dict]:
     full_text = ""
     try:
-        async with _client.messages.stream(
+        async with _anthropic_client().messages.stream(
             model=model_id,
             max_tokens=_MAX_TOKENS,
             thinking={"type": "adaptive"},
@@ -135,7 +145,7 @@ async def _call_openrouter(model_id: str, system_prompt: str, user_message: str)
         async with httpx.AsyncClient(timeout=300, transport=_openrouter_transport) as client:
             resp = await client.post(
                 OPENROUTER_CHAT_URL,
-                headers={"Authorization": f"Bearer {settings.openrouter_api_key}"},
+                headers={"Authorization": f"Bearer {get_api_key('openrouter')}"},
                 json={
                     "model": model_id,
                     "max_tokens": _MAX_TOKENS,
@@ -147,7 +157,10 @@ async def _call_openrouter(model_id: str, system_prompt: str, user_message: str)
                 },
             )
     except httpx.HTTPError as exc:
-        raise SummaryGenerationError(f"OpenRouter injoignable : {exc}") from exc
+        # Ne jamais inclure le texte de l'exception : il peut contenir la clé
+        # API en clair (ex. LocalProtocolError sur un en-tête Authorization
+        # malformé). Seul le type d'erreur est reporté, comme dans key_check.py.
+        raise SummaryGenerationError(f"OpenRouter injoignable : {type(exc).__name__}") from exc
     if resp.status_code != 200:
         raise SummaryGenerationError(
             f"OpenRouter a refusé la requête ({resp.status_code}) : {_openrouter_error(resp)}"

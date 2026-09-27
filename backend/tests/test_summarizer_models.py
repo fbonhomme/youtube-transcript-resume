@@ -1,11 +1,12 @@
 import json
 import types
+from types import SimpleNamespace
 
 import anthropic
 import httpx
 import pytest
 
-from services import llm_models, summarizer
+from services import api_keys, llm_models, summarizer
 from services.summarizer import SummaryGenerationError, anthropic_cost, generate_summary
 
 _OPENROUTER = "google/gemini-3.1-flash-lite"
@@ -23,7 +24,7 @@ _RESULT = {
 @pytest.fixture
 def openrouter(monkeypatch):
     """Simule OpenRouter ; `reply` fixe la réponse, `seen` capture la requête."""
-    monkeypatch.setattr(summarizer.settings, "openrouter_api_key", "test-or-key")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "test-or-key")
     state = {"reply": httpx.Response(200, json={}), "seen": None}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -97,14 +98,17 @@ async def test_openrouter_http_error_raises_with_message(openrouter):
 
 @pytest.mark.anyio
 async def test_openrouter_network_error_raises(monkeypatch):
-    monkeypatch.setattr(summarizer.settings, "openrouter_api_key", "test-or-key")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "test-or-key")
+
+    _FAKE_KEY = "sk-or-fakekeyleak0000"
 
     def handler(request):
-        raise httpx.ConnectError("boom")
+        raise httpx.ConnectError(f"boom {_FAKE_KEY}")
 
     monkeypatch.setattr(summarizer, "_openrouter_transport", httpx.MockTransport(handler))
-    with pytest.raises(SummaryGenerationError, match="OpenRouter injoignable"):
+    with pytest.raises(SummaryGenerationError, match="OpenRouter injoignable") as exc_info:
         await generate_summary("t", "T", model=_OPENROUTER)
+    assert _FAKE_KEY not in str(exc_info.value)
 
 
 @pytest.mark.anyio
@@ -121,7 +125,8 @@ async def test_anthropic_api_error_raises(monkeypatch):
             request=httpx.Request("POST", "https://api.anthropic.com/v1/messages")
         )
 
-    monkeypatch.setattr(summarizer._client.messages, "stream", raise_stream)
+    fake_client = SimpleNamespace(messages=SimpleNamespace(stream=raise_stream))
+    monkeypatch.setattr(summarizer, "_anthropic_client", lambda: fake_client)
     with pytest.raises(SummaryGenerationError, match="Anthropic a renvoyé une erreur"):
         await generate_summary("t", "T")
 
@@ -169,7 +174,8 @@ async def test_anthropic_success_path(monkeypatch):
         captured_kwargs.update(kwargs)
         return _FakeAnthropicStream(chunks, final_message)
 
-    monkeypatch.setattr(summarizer._client.messages, "stream", fake_stream)
+    fake_client = SimpleNamespace(messages=SimpleNamespace(stream=fake_stream))
+    monkeypatch.setattr(summarizer, "_anthropic_client", lambda: fake_client)
     data, usage = await generate_summary("t", "T")
 
     assert data["summary_short"] == "court"
@@ -297,7 +303,7 @@ def _fake_generate(monkeypatch, exc: Exception | None = None):
 
 
 def test_summarize_passes_and_stores_model(client, fake_transcript, monkeypatch):
-    monkeypatch.setattr(llm_models.settings, "openrouter_api_key", "test-or-key")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "test-or-key")
     calls = _fake_generate(monkeypatch)
     r = client.post("/summaries/", json={"url": _URL, "model": _OPENROUTER})
     assert r.status_code == 201
@@ -314,7 +320,7 @@ def test_summarize_defaults_to_opus(client, fake_transcript, monkeypatch):
 
 
 def test_summarize_generation_error_returns_502(client, fake_transcript, monkeypatch):
-    monkeypatch.setattr(llm_models.settings, "openrouter_api_key", "test-or-key")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "test-or-key")
     _fake_generate(monkeypatch, SummaryGenerationError("OpenRouter a refusé la requête (402) : Insufficient credits"))
     r = client.post("/summaries/", json={"url": _URL, "model": _OPENROUTER})
     assert r.status_code == 502

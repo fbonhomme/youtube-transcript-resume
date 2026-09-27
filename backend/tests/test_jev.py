@@ -2,7 +2,7 @@ import httpx
 import pytest
 
 from models import Summary, Theme
-from services import evaluator
+from services import api_keys, evaluator
 
 _SCORES = {"densite": 2.5, "niveau": 1.0, "actionnable": 3.0, "perennite": 0.4}
 
@@ -33,13 +33,13 @@ def _answers(choice: str | None, prob: float = 0.9, scores: dict = _SCORES) -> d
 
 @pytest.fixture
 def jev_disabled(monkeypatch):
-    monkeypatch.setattr(evaluator.settings, "openrouter_api_key", "")
-    monkeypatch.setattr(evaluator.settings, "ai_gateway_api_key", "")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "")
+    monkeypatch.setattr(api_keys.settings, "ai_gateway_api_key", "")
 
 
 @pytest.fixture
 def jev_enabled(jev_disabled, monkeypatch):
-    monkeypatch.setattr(evaluator.settings, "openrouter_api_key", "test-openrouter-key")
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", "test-openrouter-key")
 
 
 def _fake_evaluate(monkeypatch, answers_or_exc):
@@ -109,8 +109,8 @@ def test_apply_analysis_keeps_existing_theme():
 async def test_evaluate_calls_configured_provider(
     monkeypatch, openrouter_key, gateway_key, url, model, key
 ):
-    monkeypatch.setattr(evaluator.settings, "openrouter_api_key", openrouter_key)
-    monkeypatch.setattr(evaluator.settings, "ai_gateway_api_key", gateway_key)
+    monkeypatch.setattr(api_keys.settings, "openrouter_api_key", openrouter_key)
+    monkeypatch.setattr(api_keys.settings, "ai_gateway_api_key", gateway_key)
     seen = {}
 
     def handler(request: httpx.Request) -> httpx.Response:

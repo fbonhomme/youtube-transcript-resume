@@ -110,7 +110,13 @@ async def summarize(payload: SummarizeRequest, db: Session = Depends(get_db)):
 
 def _require_jev() -> None:
     if not evaluator.is_enabled():
-        raise HTTPException(status_code=503, detail="Jev non configuré (OPENROUTER_API_KEY ou AI_GATEWAY_API_KEY manquante)")
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Jev non configuré : renseignez une clé OpenRouter ou Vercel AI Gateway "
+                "dans l'Administration (ou le fichier .env)"
+            ),
+        )
 
 
 @router.post("/analyze", response_model=AnalyzeReport)

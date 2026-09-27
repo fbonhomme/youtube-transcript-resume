@@ -5,6 +5,7 @@ services:
     env_file: backend/.env
     environment:
       DATABASE_URL: sqlite:////app/data/yt_summaries.db
+      ADMIN_TRUST_PROXY_HEADER: "true"
     volumes:
       - db_data:/app/data
     restart: unless-stopped
@@ -14,6 +15,7 @@ services:
     build: ./frontend
     ports:
       - "80:80"
+      - "127.0.0.1:8080:8080"   # administration : machine hôte uniquement
     depends_on:
       - backend
     restart: unless-stopped
