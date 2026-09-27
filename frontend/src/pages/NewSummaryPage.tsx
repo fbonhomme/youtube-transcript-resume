@@ -200,7 +200,7 @@ export default function NewSummaryPage() {
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <button type="submit" className={`${styles.submit} u-pill-btn`} disabled={mutation.isPending}>
+        <button type="submit" className={`${styles.submit} u-pill-btn`} disabled={mutation.isPending || model === undefined}>
           {mutation.isPending ? (
             <><span className={styles.spinner} /> Génération en cours…</>
           ) : "Générer la synthèse"}

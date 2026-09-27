@@ -154,26 +154,61 @@ async def _call_openrouter(model_id: str, system_prompt: str, user_message: str)
         )
     try:
         data = resp.json()
-        content = data["choices"][0]["message"].get("content") or ""
+        choice = data["choices"][0]
+        content = choice["message"].get("content")
     except (ValueError, KeyError, IndexError, TypeError) as exc:
         raise SummaryGenerationError("OpenRouter a renvoyé une réponse inattendue") from exc
+    if choice.get("finish_reason") == "length":
+        raise SummaryGenerationError(
+            f"Réponse tronquée : la limite de {_MAX_TOKENS} tokens a été atteinte"
+        )
+    if not content:
+        raise SummaryGenerationError("OpenRouter a renvoyé une réponse vide")
     usage = data.get("usage") or {}
+    cost = usage.get("cost")
     return content, {
         "input_tokens": usage.get("prompt_tokens", 0) or 0,
         "output_tokens": usage.get("completion_tokens", 0) or 0,
-        "cost_usd": round(float(usage.get("cost") or 0.0), 6),
+        "cost_usd": round(float(cost), 6) if cost is not None else None,
     }
 
 
 def _parse_json(text: str) -> dict:
-    json_str = text.strip()
-    match = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", json_str)
-    if match:
-        json_str = match.group(1)
-    result = json.loads(json_str)
+    stripped = text.strip()
+    try:
+        result = json.loads(stripped)
+    except json.JSONDecodeError:
+        match = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", stripped)
+        if not match:
+            raise
+        result = json.loads(match.group(1))
     if not isinstance(result, dict):
         raise ValueError("objet JSON attendu")
     return result
+
+
+def _as_list(value: object) -> list:
+    return value if isinstance(value, list) else []
+
+
+def _clean_str_list(value: object) -> list[str]:
+    return [s for s in (str(v).strip() for v in _as_list(value)) if s]
+
+
+def _normalize_sections(value: object) -> list[dict]:
+    sections = []
+    for item in _as_list(value):
+        if not isinstance(item, dict):
+            continue
+        sections.append({"title": str(item.get("title", "")), "content": str(item.get("content", ""))})
+    return sections
+
+
+def _normalize_duration(value: object) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 5
 
 
 async def generate_summary(
@@ -209,18 +244,20 @@ async def generate_summary(
             f"{llm.label} a renvoyé une réponse qui n'est pas du JSON valide"
         ) from exc
 
-    raw_tags = [str(t).strip() for t in result.get("tags", []) if str(t).strip()]
+    raw_tags = _clean_str_list(result.get("tags"))
     tags = list(dict.fromkeys(raw_tags))[:5]
 
+    summary_short = str(result.get("summary_short", "")).strip()
+    summary_long = str(result.get("summary_long", "")).strip()
+    if not summary_short or not summary_long:
+        raise SummaryGenerationError(f"{llm.label} n'a pas respecté le format attendu")
+
     summary_data = {
-        "summary_short": str(result.get("summary_short", "")),
-        "summary_long": str(result.get("summary_long", "")),
-        "key_points": [str(p) for p in result.get("key_points", [])],
-        "sections": [
-            {"title": str(s.get("title", "")), "content": str(s.get("content", ""))}
-            for s in result.get("sections", [])
-        ],
-        "duration_read": int(result.get("duration_read", 5)),
+        "summary_short": summary_short,
+        "summary_long": summary_long,
+        "key_points": _clean_str_list(result.get("key_points")),
+        "sections": _normalize_sections(result.get("sections")),
+        "duration_read": _normalize_duration(result.get("duration_read", 5)),
         "tags": tags,
     }
 

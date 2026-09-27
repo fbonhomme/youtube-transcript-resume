@@ -1,4 +1,5 @@
 import json
+import types
 
 import anthropic
 import httpx
@@ -123,6 +124,149 @@ async def test_anthropic_api_error_raises(monkeypatch):
     monkeypatch.setattr(summarizer._client.messages, "stream", raise_stream)
     with pytest.raises(SummaryGenerationError, match="Anthropic a renvoyé une erreur"):
         await generate_summary("t", "T")
+
+
+class _FakeAnthropicStream:
+    """Faux gestionnaire de contexte async imitant `_client.messages.stream(...)`."""
+
+    def __init__(self, chunks: list[str], final_message):
+        self._chunks = chunks
+        self._final_message = final_message
+
+    async def _iter_chunks(self):
+        for chunk in self._chunks:
+            yield chunk
+
+    @property
+    def text_stream(self):
+        return self._iter_chunks()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc_info):
+        return False
+
+    async def get_final_message(self):
+        return self._final_message
+
+
+@pytest.mark.anyio
+async def test_anthropic_success_path(monkeypatch):
+    text = json.dumps(_RESULT)
+    chunks = [text[: len(text) // 2], text[len(text) // 2 :]]
+    final_message = types.SimpleNamespace(
+        usage=types.SimpleNamespace(
+            input_tokens=1000,
+            output_tokens=200,
+            cache_creation_input_tokens=300,
+            cache_read_input_tokens=400,
+        )
+    )
+    captured_kwargs = {}
+
+    def fake_stream(**kwargs):
+        captured_kwargs.update(kwargs)
+        return _FakeAnthropicStream(chunks, final_message)
+
+    monkeypatch.setattr(summarizer._client.messages, "stream", fake_stream)
+    data, usage = await generate_summary("t", "T")
+
+    assert data["summary_short"] == "court"
+    assert data["tags"] == ["ia", "docker"]
+
+    assert captured_kwargs["model"] == "claude-opus-4-7"
+    assert captured_kwargs["thinking"] == {"type": "adaptive"}
+    assert captured_kwargs["system"][0]["cache_control"] == {"type": "ephemeral"}
+
+    expected_cost = round(anthropic_cost(1000, 200, 300, 400), 6)
+    assert usage == {"input_tokens": 1000, "output_tokens": 200, "cost_usd": expected_cost}
+
+
+# ── Normalisation robuste du JSON parsé ─────────────────────────────────────
+
+@pytest.mark.anyio
+async def test_openrouter_null_tags_and_sections_become_empty_lists(openrouter):
+    payload = dict(_RESULT, tags=None, sections=None)
+    openrouter["reply"] = _chat_reply(json.dumps(payload))
+    data, _ = await generate_summary("t", "T", model=_OPENROUTER)
+    assert data["tags"] == []
+    assert data["sections"] == []
+
+
+@pytest.mark.anyio
+async def test_openrouter_non_dict_section_is_dropped(openrouter):
+    payload = dict(_RESULT, sections=["une simple chaîne", {"title": "S", "content": "C"}])
+    openrouter["reply"] = _chat_reply(json.dumps(payload))
+    data, _ = await generate_summary("t", "T", model=_OPENROUTER)
+    assert data["sections"] == [{"title": "S", "content": "C"}]
+
+
+@pytest.mark.anyio
+async def test_openrouter_non_numeric_duration_falls_back_to_five(openrouter):
+    payload = dict(_RESULT, duration_read="5 min")
+    openrouter["reply"] = _chat_reply(json.dumps(payload))
+    data, _ = await generate_summary("t", "T", model=_OPENROUTER)
+    assert data["duration_read"] == 5
+
+
+@pytest.mark.anyio
+async def test_openrouter_non_list_key_points_becomes_empty_list(openrouter):
+    payload = dict(_RESULT, key_points="a, b")
+    openrouter["reply"] = _chat_reply(json.dumps(payload))
+    data, _ = await generate_summary("t", "T", model=_OPENROUTER)
+    assert data["key_points"] == []
+
+
+@pytest.mark.anyio
+async def test_openrouter_missing_summaries_raises(openrouter):
+    openrouter["reply"] = _chat_reply(json.dumps({}))
+    with pytest.raises(SummaryGenerationError, match="n'a pas respecté le format attendu"):
+        await generate_summary("t", "T", model=_OPENROUTER)
+
+
+# ── Réponse OpenRouter tronquée / vide ───────────────────────────────────────
+
+@pytest.mark.anyio
+async def test_openrouter_truncated_response_raises(openrouter):
+    openrouter["reply"] = httpx.Response(200, json={
+        "choices": [{"message": {"role": "assistant", "content": "{\"summary_sh"}, "finish_reason": "length"}],
+        "usage": {"prompt_tokens": 1200, "completion_tokens": 16000, "cost": 0.01},
+    })
+    with pytest.raises(SummaryGenerationError, match="Réponse tronquée : la limite de 16000 tokens a été atteinte"):
+        await generate_summary("t", "T", model=_OPENROUTER)
+
+
+@pytest.mark.anyio
+async def test_openrouter_empty_content_raises(openrouter):
+    openrouter["reply"] = httpx.Response(200, json={
+        "choices": [{"message": {"role": "assistant", "content": ""}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 1200, "completion_tokens": 0, "cost": 0.0},
+    })
+    with pytest.raises(SummaryGenerationError, match="OpenRouter a renvoyé une réponse vide"):
+        await generate_summary("t", "T", model=_OPENROUTER)
+
+
+# ── cost_usd absent → None (colonne nullable) ───────────────────────────────
+
+@pytest.mark.anyio
+async def test_openrouter_missing_cost_is_none(openrouter):
+    openrouter["reply"] = httpx.Response(200, json={
+        "choices": [{"message": {"role": "assistant", "content": json.dumps(_RESULT)}}],
+        "usage": {"prompt_tokens": 1200, "completion_tokens": 300},
+    })
+    _, usage = await generate_summary("t", "T", model=_OPENROUTER)
+    assert usage["cost_usd"] is None
+
+
+# ── _parse_json : JSON direct prioritaire sur l'extraction de bloc fenced ──
+
+@pytest.mark.anyio
+async def test_openrouter_embedded_code_fence_in_valid_json_parses_directly(openrouter):
+    payload = dict(_RESULT, summary_long="Exemple : ```python\nprint(1)\n```")
+    openrouter["reply"] = _chat_reply(json.dumps(payload))
+    data, _ = await generate_summary("t", "T", model=_OPENROUTER)
+    assert data["summary_long"] == "Exemple : ```python\nprint(1)\n```"
 
 
 # ── Route ────────────────────────────────────────────────────────────────────

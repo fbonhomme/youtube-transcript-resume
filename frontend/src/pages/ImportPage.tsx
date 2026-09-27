@@ -231,7 +231,7 @@ export default function ImportPage() {
               type="button"
               className={`${styles.submit} u-pill-btn`}
               onClick={runGeneration}
-              disabled={generating || selectedCount === 0}
+              disabled={generating || selectedCount === 0 || model === undefined}
             >
               {generating
                 ? <><span className={styles.spinner} /> Génération {progress.done}/{progress.total}…</>
