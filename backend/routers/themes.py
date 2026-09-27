@@ -52,5 +52,8 @@ def delete_theme(theme_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Thème introuvable")
     # Détacher les synthèses avant suppression
     db.query(Summary).filter(Summary.theme_id == theme_id).update({"theme_id": None})
+    db.query(Summary).filter(Summary.theme_suggestion_id == theme_id).update(
+        {"theme_suggestion_id": None, "theme_confidence": None}
+    )
     db.delete(theme)
     db.commit()

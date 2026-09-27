@@ -1,6 +1,10 @@
 import api from "./client";
 import type { Theme } from "./themes";
 
+export type ScoreKey = "densite" | "niveau" | "actionnable" | "perennite";
+export type Scores = Partial<Record<ScoreKey, number>>;
+export type SortKey = "recent" | "top" | ScoreKey;
+
 export interface Section {
   title: string;
   content: string;
@@ -17,6 +21,9 @@ export interface SummaryListItem {
   tags: string[];
   duration_read: number;
   feedback: number | null;
+  scores: Scores | null;
+  theme_confidence: number | null;
+  theme_suggestion_id: number | null;
   theme_id: number | null;
   theme: Theme | null;
   created_at: string;
@@ -54,13 +61,38 @@ export const getSummary = (id: number) =>
 
 export const updateSummary = (
   id: number,
-  payload: { theme_id?: number | null; tags?: string[]; feedback?: number | null },
+  payload: {
+    theme_id?: number | null;
+    tags?: string[];
+    feedback?: number | null;
+    theme_suggestion_id?: null;
+  },
 ) => api.patch<SummaryOut>(`/summaries/${id}`, payload).then((r) => r.data);
 
 export const deleteSummary = (id: number) =>
   api.delete(`/summaries/${id}`);
 
-export const searchSummaries = (params: { q?: string; theme_id?: number; tag?: string; skip?: number; limit?: number }) =>
+export const analyzeSummary = (id: number) =>
+  api.post<SummaryOut>(`/summaries/${id}/analyze`).then((r) => r.data);
+
+export interface AnalyzeReport {
+  analyzed: number;
+  auto_classified: number;
+  suggested: number;
+  failed: number;
+}
+
+export const analyzeLibrary = () =>
+  api.post<AnalyzeReport>("/summaries/analyze").then((r) => r.data);
+
+export const searchSummaries = (params: {
+  q?: string;
+  theme_id?: number;
+  tag?: string;
+  sort?: SortKey;
+  skip?: number;
+  limit?: number;
+}) =>
   api.get<SearchResult>("/search/", { params }).then((r) => r.data);
 
 export interface TagCount {

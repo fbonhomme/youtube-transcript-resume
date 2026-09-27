@@ -36,12 +36,14 @@ class ThemeCreate(BaseModel):
     name: str
     color: str = "#6366f1"
     icon: Optional[str] = None
+    description: Optional[str] = None
 
 
 class ThemeUpdate(BaseModel):
     name: Optional[str] = None
     color: Optional[str] = None
     icon: Optional[str] = None
+    description: Optional[str] = None
 
 
 class ThemeOut(BaseModel):
@@ -49,6 +51,7 @@ class ThemeOut(BaseModel):
     name: str
     color: str
     icon: Optional[str]
+    description: Optional[str] = None
     created_at: datetime
     summary_count: int = 0
 
@@ -102,6 +105,9 @@ class SummaryOut(BaseModel):
     output_tokens: Optional[int]
     cost_usd: Optional[float]
     feedback: Optional[int]
+    scores: Optional[dict[str, float]] = None
+    theme_confidence: Optional[float] = None
+    theme_suggestion_id: Optional[int] = None
     theme_id: Optional[int]
     theme: Optional[ThemeOut]
     prompt_id: Optional[int]
@@ -121,6 +127,9 @@ class SummaryListItem(BaseModel):
     tags: list[str]
     duration_read: int
     feedback: Optional[int] = None
+    scores: Optional[dict[str, float]] = None
+    theme_confidence: Optional[float] = None
+    theme_suggestion_id: Optional[int] = None
     cost_usd: Optional[float]
     theme_id: Optional[int]
     theme: Optional[ThemeOut]
@@ -134,6 +143,7 @@ class SummaryUpdate(BaseModel):
     theme_id: Optional[int] = None
     tags: Optional[list[str]] = None
     feedback: Optional[int] = None
+    theme_suggestion_id: Optional[int] = None  # null = ignorer la suggestion Jev
 
     @field_validator("feedback")
     @classmethod
@@ -141,6 +151,13 @@ class SummaryUpdate(BaseModel):
         if v is not None and v not in (-1, 1):
             raise ValueError("feedback doit valoir 1, -1 ou null")
         return v
+
+
+class AnalyzeReport(BaseModel):
+    analyzed: int
+    auto_classified: int
+    suggested: int
+    failed: int
 
 
 # ── Import ───────────────────────────────────────────────────────────────────

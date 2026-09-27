@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchSummaries } from "../api/summaries";
+import type { SortKey } from "../api/summaries";
+import { SORT_OPTIONS } from "../lib/scores";
 import { listThemes } from "../api/themes";
 import SummaryCard from "../components/SummaryCard";
 import SearchBar from "../components/SearchBar";
@@ -13,11 +15,12 @@ export default function LibraryPage() {
   const [q, setQ] = useState("");
   const [themeId, setThemeId] = useState<number | null>(null);
   const [tag, setTag] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortKey>("recent");
 
   const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
   const { data, isLoading } = useQuery({
-    queryKey: ["summaries", q, themeId, tag],
-    queryFn: () => searchSummaries({ q, theme_id: themeId ?? undefined, tag: tag ?? undefined }),
+    queryKey: ["summaries", q, themeId, tag, sort],
+    queryFn: () => searchSummaries({ q, theme_id: themeId ?? undefined, tag: tag ?? undefined, sort }),
   });
 
   const items = data?.items ?? [];
@@ -35,6 +38,16 @@ export default function LibraryPage() {
             {total > 0 && <span className={styles.count}>{total}</span>}
           </h1>
           <SearchBar value={q} onChange={setQ} />
+          <select
+            className={styles.sort}
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            aria-label="Trier par"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
         </div>
 
         {isLoading ? (

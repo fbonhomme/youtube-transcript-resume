@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSummary, deleteSummary, updateSummary } from "../api/summaries";
+import { analyzeSummary, getSummary, deleteSummary, updateSummary } from "../api/summaries";
+import type { ScoreKey } from "../api/summaries";
 import { listThemes } from "../api/themes";
 import { useConfirm } from "../components/ConfirmDialog";
+import { SCORE_LABELS, levelLabel } from "../lib/scores";
 import styles from "./SummaryDetailPage.module.css";
 
 export default function SummaryDetailPage() {
@@ -30,9 +32,17 @@ export default function SummaryDetailPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { theme_id?: number | null; feedback?: number | null }) =>
+    mutationFn: (payload: { theme_id?: number | null; feedback?: number | null; theme_suggestion_id?: null }) =>
       updateSummary(Number(id), payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["summary", id] }),
+  });
+
+  const analyzeMutation = useMutation({
+    mutationFn: () => analyzeSummary(Number(id)),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["summary", id], data);
+      queryClient.invalidateQueries({ queryKey: ["summaries"] });
+    },
   });
 
   if (isLoading) return <p className={styles.loading}>Chargement…</p>;
@@ -45,6 +55,14 @@ export default function SummaryDetailPage() {
   const scrollToSection = (i: number) => {
     document.getElementById(`section-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  const suggestedTheme = themes.find((t) => t.id === summary.theme_suggestion_id);
+  const confidencePct = summary.theme_confidence != null ? Math.round(summary.theme_confidence * 100) : null;
+  const analyzeError = analyzeMutation.isError
+    ? (analyzeMutation.error as { response?: { status?: number } }).response?.status === 503
+      ? "Jev n'est pas configuré (OPENROUTER_API_KEY)."
+      : "L'analyse Jev a échoué."
+    : "";
 
   const setFeedback = (value: number) => {
     updateMutation.mutate({ feedback: summary.feedback === value ? null : value });
@@ -120,7 +138,66 @@ export default function SummaryDetailPage() {
                 <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ""}{t.name}</option>
               ))}
             </select>
+            {summary.theme && confidencePct != null && (
+              <span className={styles.jevNote}>Classé automatiquement par Jev ({confidencePct} %)</span>
+            )}
           </div>
+
+          {suggestedTheme && !summary.theme_id && (
+            <div className={styles.suggestion}>
+              <span>
+                Jev suggère <strong>{suggestedTheme.icon ? `${suggestedTheme.icon} ` : ""}{suggestedTheme.name}</strong>
+                {confidencePct != null && ` (${confidencePct} %)`}
+              </span>
+              <div className={styles.suggestionActions}>
+                <button
+                  className={styles.btnOutline}
+                  onClick={() => updateMutation.mutate({ theme_id: suggestedTheme.id })}
+                  disabled={updateMutation.isPending}
+                >
+                  Accepter
+                </button>
+                <button
+                  className={styles.btnGhost}
+                  onClick={() => updateMutation.mutate({ theme_suggestion_id: null })}
+                  disabled={updateMutation.isPending}
+                >
+                  Ignorer
+                </button>
+              </div>
+            </div>
+          )}
+
+          <section className={styles.scores}>
+            <span className={styles.fieldLabel}>Analyse Jev</span>
+            {summary.scores ? (
+              <ul className={styles.scoreList}>
+                {(Object.keys(SCORE_LABELS) as ScoreKey[]).map((key) => {
+                  const value = summary.scores?.[key];
+                  if (value == null) return null;
+                  return (
+                    <li key={key} className={styles.scoreRow}>
+                      <span className={styles.scoreName}>{SCORE_LABELS[key].label}</span>
+                      <span className={styles.scoreBar}>
+                        <span style={{ width: `${(value / 3) * 100}%` }} />
+                      </span>
+                      <span className={styles.scoreLevel}>{levelLabel(key, value)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className={styles.jevNote}>Pas encore analysée.</p>
+            )}
+            <button
+              className={styles.btnOutline}
+              onClick={() => analyzeMutation.mutate()}
+              disabled={analyzeMutation.isPending}
+            >
+              {analyzeMutation.isPending ? "Analyse…" : summary.scores ? "Ré-analyser" : "Analyser avec Jev"}
+            </button>
+            {analyzeError && <p className={styles.jevError}>{analyzeError}</p>}
+          </section>
 
           <button
             className={styles.btnDanger}

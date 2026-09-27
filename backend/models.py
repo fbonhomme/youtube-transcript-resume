@@ -25,6 +25,7 @@ class Theme(Base):
     name = Column(String(100), unique=True, nullable=False)
     color = Column(String(7), default="#6366f1")
     icon = Column(String(50), nullable=True)
+    description = Column(Text, nullable=True)  # guide Jev pour le classement automatique
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     summaries = relationship("Summary", back_populates="theme", lazy="select")
@@ -51,6 +52,12 @@ class Summary(Base):
     output_tokens = Column(Integer, nullable=True)
     cost_usd = Column(Float, nullable=True)
     feedback = Column(Integer, nullable=True)  # 1 = like, -1 = dislike, NULL = neutre
+
+    # Analyse Jev : notes 0–3 par critère, et thème suggéré quand la confiance
+    # est trop faible pour l'appliquer automatiquement.
+    scores = Column(JSON, nullable=True)
+    theme_confidence = Column(Float, nullable=True)
+    theme_suggestion_id = Column(Integer, nullable=True)
 
     theme_id = Column(Integer, ForeignKey("themes.id"), nullable=True)
     theme = relationship("Theme", back_populates="summaries")

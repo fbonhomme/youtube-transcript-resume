@@ -5,6 +5,7 @@ export interface Theme {
   name: string;
   color: string;
   icon: string | null;
+  description: string | null;
   created_at: string;
   summary_count: number;
 }
@@ -13,6 +14,7 @@ export interface ThemeCreate {
   name: string;
   color?: string;
   icon?: string | null;
+  description?: string | null;
 }
 
 export const listThemes = () =>

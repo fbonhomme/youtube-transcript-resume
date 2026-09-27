@@ -278,3 +278,88 @@
     break-inside: avoid;
   }
 }
+
+.jevNote {
+  font-size: 0.75rem;
+  color: var(--text3);
+}
+
+.jevError {
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-dim);
+  font-size: 0.85rem;
+}
+
+.suggestionActions {
+  display: flex;
+  gap: 6px;
+}
+
+.btnGhost {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--text3);
+  font-size: 0.82rem;
+}
+.btnGhost:hover { color: var(--text); }
+
+.scores {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.scoreList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.scoreRow {
+  display: grid;
+  grid-template-columns: 90px 1fr 110px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+
+.scoreName { color: var(--text2); }
+
+.scoreBar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg4);
+  overflow: hidden;
+}
+.scoreBar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.scoreLevel {
+  color: var(--text);
+  text-align: right;
+}
+
+@media print {
+  .scores, .suggestion { display: none; }
+}
