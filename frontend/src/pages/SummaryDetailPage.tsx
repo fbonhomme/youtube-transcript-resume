@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { analyzeSummary, getSummary, deleteSummary, updateSummary } from "../api/summaries";
 import type { ScoreKey } from "../api/summaries";
 import { listThemes } from "../api/themes";
+import { listModels } from "../api/models";
 import { useConfirm } from "../components/ConfirmDialog";
 import { SCORE_LABELS, levelLabel } from "../lib/scores";
 import styles from "./SummaryDetailPage.module.css";
@@ -22,6 +23,7 @@ export default function SummaryDetailPage() {
   });
 
   const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
+  const { data: models = [] } = useQuery({ queryKey: ["models"], queryFn: listModels });
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteSummary(Number(id)),
@@ -93,6 +95,11 @@ export default function SummaryDetailPage() {
           <div className={styles.pills}>
             <span className={styles.pill}>{summary.duration_read} min de lecture</span>
             <span className={styles.pill}>{summary.language.toUpperCase()}</span>
+            {summary.model && (
+              <span className={styles.pill}>
+                {models.find((m) => m.id === summary.model)?.label ?? summary.model}
+              </span>
+            )}
             {summary.tags.map((t) => <span key={t} className={styles.tag}>{t}</span>)}
           </div>
           <p className={styles.date}>{date}</p>

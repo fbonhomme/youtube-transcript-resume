@@ -58,6 +58,18 @@ class ThemeOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── Model ────────────────────────────────────────────────────────────────────
+
+class ModelOut(BaseModel):
+    id: str
+    label: str
+    provider: str
+    input_price: float
+    output_price: float
+    available: bool
+    is_default: bool
+
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 
 class Section(BaseModel):
@@ -71,6 +83,7 @@ class SummarizeRequest(BaseModel):
     theme_id: Optional[int] = None
     prompt_id: Optional[int] = None
     tags: list[str] = []
+    model: Optional[str] = None  # None = modèle par défaut
 
     @field_validator("url")
     @classmethod
@@ -104,6 +117,7 @@ class SummaryOut(BaseModel):
     input_tokens: Optional[int]
     output_tokens: Optional[int]
     cost_usd: Optional[float]
+    model: Optional[str] = None
     feedback: Optional[int]
     scores: Optional[dict[str, float]] = None
     theme_confidence: Optional[float] = None

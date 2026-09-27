@@ -7,6 +7,8 @@ import {
   type ImportPreviewItem,
 } from "../api/summaries";
 import { listThemes } from "../api/themes";
+import ModelSelect from "../components/ModelSelect";
+import { useModelChoice } from "../lib/modelChoice";
 import styles from "./ImportPage.module.css";
 
 type GenStatus = "idle" | "pending" | "done" | "error";
@@ -18,6 +20,7 @@ export default function ImportPage() {
   const [items, setItems] = useState<ImportPreviewItem[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [themeId, setThemeId] = useState<number | null>(null);
+  const { models, model, setModel } = useModelChoice();
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [genStatus, setGenStatus] = useState<Record<string, { status: GenStatus; message?: string }>>({});
@@ -71,7 +74,7 @@ export default function ImportPage() {
       if (stopRef.current) break;
       setGenStatus((s) => ({ ...s, [it.video_id]: { status: "pending" } }));
       try {
-        await createSummary({ url: it.url, theme_id: themeId, tags });
+        await createSummary({ url: it.url, theme_id: themeId, tags, model });
         setGenStatus((s) => ({ ...s, [it.video_id]: { status: "done" } }));
       } catch (err: unknown) {
         const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
@@ -150,6 +153,17 @@ export default function ImportPage() {
               </div>
 
               <div className={styles.field}>
+                <span className={styles.fieldLabel}>Modèle</span>
+                <ModelSelect
+                  models={models}
+                  value={model}
+                  onChange={setModel}
+                  className={styles.select}
+                  disabled={generating}
+                />
+              </div>
+
+              <div className={styles.field}>
                 <span className={styles.fieldLabel}>Tags (appliqués à tout le lot)</span>
                 <div className={styles.tagRow}>
                   <input
@@ -217,7 +231,7 @@ export default function ImportPage() {
               type="button"
               className={`${styles.submit} u-pill-btn`}
               onClick={runGeneration}
-              disabled={generating || selectedCount === 0}
+              disabled={generating || selectedCount === 0 || model === undefined}
             >
               {generating
                 ? <><span className={styles.spinner} /> Génération {progress.done}/{progress.total}…</>

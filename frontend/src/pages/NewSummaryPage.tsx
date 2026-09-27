@@ -5,6 +5,8 @@ import axios from "axios";
 import { createSummary } from "../api/summaries";
 import { listThemes } from "../api/themes";
 import { listPrompts } from "../api/prompts";
+import ModelSelect from "../components/ModelSelect";
+import { useModelChoice } from "../lib/modelChoice";
 import styles from "./NewSummaryPage.module.css";
 
 const LANGUAGES = [
@@ -34,6 +36,7 @@ export default function NewSummaryPage() {
 
   const { data: themes = [] } = useQuery({ queryKey: ["themes"], queryFn: listThemes });
   const { data: prompts = [] } = useQuery({ queryKey: ["prompts"], queryFn: listPrompts });
+  const { models, model, setModel } = useModelChoice();
 
   const mutation = useMutation({
     mutationFn: (payload: Parameters<typeof createSummary>[0]) => {
@@ -75,7 +78,7 @@ export default function NewSummaryPage() {
     e.preventDefault();
     setError("");
     if (!url.trim()) { setError("Veuillez saisir une URL YouTube."); return; }
-    mutation.mutate({ url: url.trim(), language, theme_id: themeId, prompt_id: promptId, tags });
+    mutation.mutate({ url: url.trim(), language, theme_id: themeId, prompt_id: promptId, tags, model });
   };
 
   const defaultPrompt = prompts.find((p) => p.is_default);
@@ -154,6 +157,17 @@ export default function NewSummaryPage() {
                 ))}
               </select>
             </div>
+
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Modèle</span>
+              <ModelSelect
+                models={models}
+                value={model}
+                onChange={setModel}
+                className={styles.select}
+                disabled={mutation.isPending}
+              />
+            </div>
           </div>
 
           <div className={styles.tagSection}>
@@ -186,7 +200,7 @@ export default function NewSummaryPage() {
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <button type="submit" className={`${styles.submit} u-pill-btn`} disabled={mutation.isPending}>
+        <button type="submit" className={`${styles.submit} u-pill-btn`} disabled={mutation.isPending || model === undefined}>
           {mutation.isPending ? (
             <><span className={styles.spinner} /> Génération en cours…</>
           ) : "Générer la synthèse"}

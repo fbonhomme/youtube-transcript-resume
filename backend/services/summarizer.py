@@ -2,10 +2,41 @@ import json
 import re
 
 import anthropic
+import httpx
 
 from config import settings
+from services.llm_models import DEFAULT_MODEL, get_model
 
 _client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+
+OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
+_MAX_TOKENS = 16000
+
+# Transport httpx injectable pour les tests.
+_openrouter_transport: httpx.AsyncBaseTransport | None = None
+
+# Claude Opus 4.7 en direct (USD par million de tokens). Écriture cache =
+# 1,25 × entrée, lecture cache = 0,1 × entrée.
+_ANTHROPIC_PRICE = {
+    "input": 5.0,
+    "output": 25.0,
+    "cache_write": 6.25,
+    "cache_read": 0.50,
+}
+
+
+class SummaryGenerationError(Exception):
+    """Échec de génération dont le message peut être montré à l'utilisateur."""
+
+
+def anthropic_cost(input_tokens: int, output_tokens: int, cache_write: int, cache_read: int) -> float:
+    return (
+        input_tokens * _ANTHROPIC_PRICE["input"]
+        + output_tokens * _ANTHROPIC_PRICE["output"]
+        + cache_write * _ANTHROPIC_PRICE["cache_write"]
+        + cache_read * _ANTHROPIC_PRICE["cache_read"]
+    ) / 1_000_000
+
 
 _SYSTEM_PROMPT = """\
 You are an expert at synthesizing YouTube video content from transcripts.
@@ -53,17 +84,131 @@ _LANGUAGE_INSTRUCTIONS = {
     "zh": "Write the entire summary in Chinese (Simplified).",
 }
 
-# Claude Opus 4.7 pricing (USD per million tokens)
-_PRICE = {
-    "input": 15.0,
-    "output": 75.0,
-    "cache_write": 18.75,
-    "cache_read": 1.50,
-}
-
 
 def get_default_system_prompt() -> str:
     return _SYSTEM_PROMPT
+
+
+async def _call_anthropic(model_id: str, system_prompt: str, user_message: str) -> tuple[str, dict]:
+    full_text = ""
+    try:
+        async with _client.messages.stream(
+            model=model_id,
+            max_tokens=_MAX_TOKENS,
+            thinking={"type": "adaptive"},
+            system=[
+                {
+                    "type": "text",
+                    "text": system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+            messages=[{"role": "user", "content": user_message}],
+        ) as stream:
+            async for text in stream.text_stream:
+                full_text += text
+            final_msg = await stream.get_final_message()
+    except anthropic.APIError as exc:
+        raise SummaryGenerationError(f"Anthropic a renvoyé une erreur : {exc}") from exc
+
+    usage = final_msg.usage
+    input_tok = getattr(usage, "input_tokens", 0) or 0
+    output_tok = getattr(usage, "output_tokens", 0) or 0
+    cache_write = getattr(usage, "cache_creation_input_tokens", 0) or 0
+    cache_read = getattr(usage, "cache_read_input_tokens", 0) or 0
+    return full_text, {
+        "input_tokens": input_tok,
+        "output_tokens": output_tok,
+        "cost_usd": round(anthropic_cost(input_tok, output_tok, cache_write, cache_read), 6),
+    }
+
+
+def _openrouter_error(resp: httpx.Response) -> str:
+    try:
+        return resp.json()["error"]["message"]
+    except (ValueError, KeyError, TypeError):
+        return resp.text[:200]
+
+
+async def _call_openrouter(model_id: str, system_prompt: str, user_message: str) -> tuple[str, dict]:
+    try:
+        async with httpx.AsyncClient(timeout=300, transport=_openrouter_transport) as client:
+            resp = await client.post(
+                OPENROUTER_CHAT_URL,
+                headers={"Authorization": f"Bearer {settings.openrouter_api_key}"},
+                json={
+                    "model": model_id,
+                    "max_tokens": _MAX_TOKENS,
+                    "response_format": {"type": "json_object"},
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise SummaryGenerationError(f"OpenRouter injoignable : {exc}") from exc
+    if resp.status_code != 200:
+        raise SummaryGenerationError(
+            f"OpenRouter a refusé la requête ({resp.status_code}) : {_openrouter_error(resp)}"
+        )
+    try:
+        data = resp.json()
+        choice = data["choices"][0]
+        content = choice["message"].get("content")
+    except (ValueError, KeyError, IndexError, TypeError) as exc:
+        raise SummaryGenerationError("OpenRouter a renvoyé une réponse inattendue") from exc
+    if choice.get("finish_reason") == "length":
+        raise SummaryGenerationError(
+            f"Réponse tronquée : la limite de {_MAX_TOKENS} tokens a été atteinte"
+        )
+    if not content:
+        raise SummaryGenerationError("OpenRouter a renvoyé une réponse vide")
+    usage = data.get("usage") or {}
+    cost = usage.get("cost")
+    return content, {
+        "input_tokens": usage.get("prompt_tokens", 0) or 0,
+        "output_tokens": usage.get("completion_tokens", 0) or 0,
+        "cost_usd": round(float(cost), 6) if cost is not None else None,
+    }
+
+
+def _parse_json(text: str) -> dict:
+    stripped = text.strip()
+    try:
+        result = json.loads(stripped)
+    except json.JSONDecodeError:
+        match = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", stripped)
+        if not match:
+            raise
+        result = json.loads(match.group(1))
+    if not isinstance(result, dict):
+        raise ValueError("objet JSON attendu")
+    return result
+
+
+def _as_list(value: object) -> list:
+    return value if isinstance(value, list) else []
+
+
+def _clean_str_list(value: object) -> list[str]:
+    return [s for s in (str(v).strip() for v in _as_list(value)) if s]
+
+
+def _normalize_sections(value: object) -> list[dict]:
+    sections = []
+    for item in _as_list(value):
+        if not isinstance(item, dict):
+            continue
+        sections.append({"title": str(item.get("title", "")), "content": str(item.get("content", ""))})
+    return sections
+
+
+def _normalize_duration(value: object) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 5
 
 
 async def generate_summary(
@@ -72,7 +217,12 @@ async def generate_summary(
     language: str = "fr",
     system_prompt: str | None = None,
     existing_tags: list[str] | None = None,
+    model: str = DEFAULT_MODEL,
 ) -> tuple[dict, dict]:
+    llm = get_model(model)
+    if llm is None:
+        raise ValueError(f"Modèle inconnu : {model}")
+
     base_prompt = system_prompt if system_prompt is not None else _SYSTEM_PROMPT
     effective_prompt = base_prompt + _TAGS_RULE
     lang_instruction = _LANGUAGE_INSTRUCTIONS.get(language, _LANGUAGE_INSTRUCTIONS["fr"])
@@ -84,62 +234,30 @@ async def generate_summary(
         f"Transcript:\n{transcript}"
     )
 
-    full_text = ""
-    async with _client.messages.stream(
-        model="claude-opus-4-7",
-        max_tokens=16000,
-        thinking={"type": "adaptive"},
-        system=[
-            {
-                "type": "text",
-                "text": effective_prompt,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": user_message}],
-    ) as stream:
-        async for text in stream.text_stream:
-            full_text += text
-        final_msg = await stream.get_final_message()
+    call = _call_openrouter if llm.provider == "openrouter" else _call_anthropic
+    full_text, usage_data = await call(llm.id, effective_prompt, user_message)
 
-    usage = final_msg.usage
-    input_tok = getattr(usage, "input_tokens", 0) or 0
-    output_tok = getattr(usage, "output_tokens", 0) or 0
-    cache_write = getattr(usage, "cache_creation_input_tokens", 0) or 0
-    cache_read = getattr(usage, "cache_read_input_tokens", 0) or 0
+    try:
+        result = _parse_json(full_text)
+    except ValueError as exc:  # json.JSONDecodeError hérite de ValueError
+        raise SummaryGenerationError(
+            f"{llm.label} a renvoyé une réponse qui n'est pas du JSON valide"
+        ) from exc
 
-    cost_usd = (
-        input_tok * _PRICE["input"] / 1_000_000
-        + output_tok * _PRICE["output"] / 1_000_000
-        + cache_write * _PRICE["cache_write"] / 1_000_000
-        + cache_read * _PRICE["cache_read"] / 1_000_000
-    )
-
-    usage_data = {
-        "input_tokens": input_tok,
-        "output_tokens": output_tok,
-        "cost_usd": round(cost_usd, 6),
-    }
-
-    json_str = full_text.strip()
-    match = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", json_str)
-    if match:
-        json_str = match.group(1)
-
-    result = json.loads(json_str)
-
-    raw_tags = [str(t).strip() for t in result.get("tags", []) if str(t).strip()]
+    raw_tags = _clean_str_list(result.get("tags"))
     tags = list(dict.fromkeys(raw_tags))[:5]
 
+    summary_short = str(result.get("summary_short", "")).strip()
+    summary_long = str(result.get("summary_long", "")).strip()
+    if not summary_short or not summary_long:
+        raise SummaryGenerationError(f"{llm.label} n'a pas respecté le format attendu")
+
     summary_data = {
-        "summary_short": str(result.get("summary_short", "")),
-        "summary_long": str(result.get("summary_long", "")),
-        "key_points": [str(p) for p in result.get("key_points", [])],
-        "sections": [
-            {"title": str(s.get("title", "")), "content": str(s.get("content", ""))}
-            for s in result.get("sections", [])
-        ],
-        "duration_read": int(result.get("duration_read", 5)),
+        "summary_short": summary_short,
+        "summary_long": summary_long,
+        "key_points": _clean_str_list(result.get("key_points")),
+        "sections": _normalize_sections(result.get("sections")),
+        "duration_read": _normalize_duration(result.get("duration_read", 5)),
         "tags": tags,
     }
 

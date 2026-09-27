@@ -35,6 +35,7 @@ export interface SummaryOut extends SummaryListItem {
   transcript: string | null;
   input_tokens: number | null;
   output_tokens: number | null;
+  model: string | null;
 }
 
 export interface SummarizeRequest {
@@ -43,6 +44,7 @@ export interface SummarizeRequest {
   theme_id?: number | null;
   prompt_id?: number | null;
   tags?: string[];
+  model?: string;
 }
 
 export interface SearchResult {
