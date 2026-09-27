@@ -16,15 +16,45 @@ from services.key_check import check_key
 
 ADMIN_ACCESS_HEADER = "x-admin-access"
 _LOOPBACK = {"127.0.0.1", "::1"}
+_ALLOWED_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
+
+
+def _hostname_from_host_header(value: str) -> str | None:
+    """Extrait le nom d'hôte d'un en-tête Host (sans le port). Gère la forme
+    IPv6 entre crochets (`[::1]:8080`). Renvoie None si l'en-tête est absent
+    ou ambigu (pas de crochets mais plusieurs `:`, ex. IPv6 nu)."""
+    if not value:
+        return None
+    if value.startswith("["):
+        end = value.find("]")
+        if end == -1:
+            return None
+        return value[1:end].lower()
+    if ":" in value:
+        hostname, _, maybe_port = value.rpartition(":")
+        if not maybe_port.isdigit():
+            return None
+        return hostname.lower()
+    return value.lower()
 
 
 def require_local_admin(request: Request) -> None:
     """N'autorise que la machine locale : client loopback (développement) ou,
-    sous Docker, l'en-tête posé par le bloc nginx du port 127.0.0.1:8080."""
+    sous Docker, l'en-tête posé par le bloc nginx du port 127.0.0.1:8080.
+    Exige en plus que l'en-tête Host désigne bien cette machine, pour se
+    protéger d'un DNS rebinding (page malveillante qui résout un domaine
+    public vers 127.0.0.1 et envoie Host: <domaine-attaquant>)."""
+    hostname = _hostname_from_host_header(request.headers.get("host", ""))
+    host_allowed = hostname in _ALLOWED_HOSTNAMES
+
     host = request.client.host if request.client else ""
-    if host in _LOOPBACK:
+    if host in _LOOPBACK and host_allowed:
         return
-    if settings.admin_trust_proxy_header and request.headers.get(ADMIN_ACCESS_HEADER) == "local":
+    if (
+        settings.admin_trust_proxy_header
+        and request.headers.get(ADMIN_ACCESS_HEADER) == "local"
+        and host_allowed
+    ):
         return
     raise HTTPException(
         status_code=403,
@@ -32,6 +62,10 @@ def require_local_admin(request: Request) -> None:
     )
 
 
+# Les routes d'administration modifient un état sensible (clés API) : elles
+# doivent rester en PUT/DELETE avec un corps JSON. Le préflight CORS (déclenché
+# par ces méthodes/en-têtes non "simples") constitue la protection CSRF — ne
+# jamais ajouter de route GET ou POST sans corps qui change cet état.
 router = APIRouter(dependencies=[Depends(require_local_admin)])
 
 
