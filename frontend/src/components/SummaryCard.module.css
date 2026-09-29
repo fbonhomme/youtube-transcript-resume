@@ -16,6 +16,88 @@
   box-shadow: var(--elev-hover), 0 0 0 1px var(--glow-strong);
 }
 
+.link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  color: inherit;
+}
+
+/* ── Suggestion de thème à valider ── */
+.pending {
+  border: 1px dashed var(--accent);
+}
+
+.pendingRibbon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--accent);
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 18px 14px;
+  border-top: 1px dashed var(--accent);
+  background: var(--accent-dim);
+}
+
+.suggestionLabel {
+  font-size: 0.78rem;
+  color: var(--text2);
+}
+
+.confidence {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text3);
+}
+
+.suggestionActions {
+  display: flex;
+  gap: 8px;
+}
+
+.accept, .ignore {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.accept {
+  background: var(--accent);
+  color: #000;
+  border: 1px solid var(--accent);
+}
+.accept:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+.ignore {
+  background: transparent;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+}
+.ignore:hover:not(:disabled) { color: var(--text); border-color: var(--text3); }
+
+.accept:disabled, .ignore:disabled { opacity: .5; cursor: default; }
+
+.noTheme {
+  color: var(--text3);
+  opacity: 1;
+}
+
 /* ── Thumbnail ── */
 .thumb {
   position: relative;

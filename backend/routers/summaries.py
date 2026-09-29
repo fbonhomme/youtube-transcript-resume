@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
 from models import Prompt, Summary, Theme
+from routers.search import PENDING_FILTER
 from schemas import (
+    AcceptSuggestionsReport,
     AnalyzeReport,
     ImportPreviewItem,
     ImportPreviewResult,
@@ -153,6 +155,18 @@ async def analyze_library(db: Session = Depends(get_db)):
     return report
 
 
+@router.post("/accept-suggestions", response_model=AcceptSuggestionsReport)
+def accept_all_suggestions(db: Session = Depends(get_db)):
+    """Applique d'un coup toutes les suggestions de thème Jev en attente."""
+    pending = db.query(Summary).filter(*PENDING_FILTER).all()
+    for summary in pending:
+        summary.theme_id = summary.theme_suggestion_id
+        summary.theme_suggestion_id = None
+        summary.theme_confidence = None
+    db.commit()
+    return AcceptSuggestionsReport(accepted=len(pending))
+
+
 @router.get("/", response_model=list[SummaryListItem])
 def list_summaries(
     theme_id: int | None = None,
@@ -251,6 +265,9 @@ def update_summary(summary_id: int, payload: SummaryUpdate, db: Session = Depend
     if "theme_id" in changes:
         # Choix manuel du thème : la suggestion Jev n'a plus lieu d'être.
         changes["theme_suggestion_id"] = None
+        changes["theme_confidence"] = None
+    elif changes.get("theme_suggestion_id", 0) is None:
+        # Suggestion ignorée : son score de confiance n'a plus de sens.
         changes["theme_confidence"] = None
     for field, value in changes.items():
         setattr(summary, field, value)

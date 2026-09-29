@@ -31,6 +31,16 @@
 
 .name { flex: 1; min-width: 0; }
 
+.pendingDot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.unthemedDot { border: 1px solid var(--text3); }
+
+.separator {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2px 0;
+}
+
 .count {
   font-family: var(--font-mono);
   font-size: 0.72rem;

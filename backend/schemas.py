@@ -175,6 +175,15 @@ class AnalyzeReport(BaseModel):
     failed: int
 
 
+class ThemeStatusCounts(BaseModel):
+    pending: int  # sans thème, suggestion Jev à valider
+    unthemed: int  # ni thème ni suggestion
+
+
+class AcceptSuggestionsReport(BaseModel):
+    accepted: int
+
+
 # ── Import ───────────────────────────────────────────────────────────────────
 
 class ImportPreviewItem(BaseModel):
