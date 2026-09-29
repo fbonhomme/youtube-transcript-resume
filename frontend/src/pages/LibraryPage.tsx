@@ -145,7 +145,7 @@ export default function LibraryPage() {
                   summary={s}
                   index={i}
                   suggestedTheme={suggested}
-                  busy={decideMutation.isPending}
+                  busy={decideMutation.isPending && decideMutation.variables?.id === s.id}
                   onAcceptSuggestion={() => suggested && decideMutation.mutate({ id: s.id, themeIdToApply: suggested.id })}
                   onIgnoreSuggestion={() => decideMutation.mutate({ id: s.id, themeIdToApply: null })}
                 />

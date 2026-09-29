@@ -73,5 +73,14 @@ def test_accept_all_suggestions(client, db_session):
     assert client.get("/search/theme-status").json() == {"pending": 0, "unthemed": 1}
 
 
+def test_ignore_suggestion_clears_confidence(client, db_session):
+    _seed(db_session)
+    s = db_session.query(Summary).filter(Summary.title == "suggérée tech").one()
+    r = client.patch(f"/summaries/{s.id}", json={"theme_suggestion_id": None})
+    assert r.json()["theme_suggestion_id"] is None
+    assert r.json()["theme_confidence"] is None
+    assert client.get("/search/theme-status").json() == {"pending": 1, "unthemed": 2}
+
+
 def test_accept_all_when_nothing_pending(client):
     assert client.post("/summaries/accept-suggestions").json() == {"accepted": 0}

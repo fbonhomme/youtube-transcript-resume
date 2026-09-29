@@ -266,6 +266,9 @@ def update_summary(summary_id: int, payload: SummaryUpdate, db: Session = Depend
         # Choix manuel du thème : la suggestion Jev n'a plus lieu d'être.
         changes["theme_suggestion_id"] = None
         changes["theme_confidence"] = None
+    elif changes.get("theme_suggestion_id", 0) is None:
+        # Suggestion ignorée : son score de confiance n'a plus de sens.
+        changes["theme_confidence"] = None
     for field, value in changes.items():
         setattr(summary, field, value)
     db.commit()

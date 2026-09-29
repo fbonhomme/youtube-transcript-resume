@@ -7,7 +7,7 @@ import styles from "./SummaryCard.module.css";
 interface Props {
   summary: SummaryListItem;
   index?: number;
-  // Thème suggéré par Jev, à valider (synthèse sans thème).
+  // Thème suggéré par Jev (undefined tant que la liste des thèmes n'est pas chargée).
   suggestedTheme?: Theme;
   onAcceptSuggestion?: () => void;
   onIgnoreSuggestion?: () => void;
@@ -27,7 +27,8 @@ export default function SummaryCard({
   const date = new Date(summary.created_at).toLocaleDateString("fr-FR", {
     day: "2-digit", month: "short", year: "numeric",
   });
-  const pending = !summary.theme && suggestedTheme !== undefined;
+  // Le statut vient de la synthèse elle-même, pas du chargement de la liste des thèmes.
+  const pending = !summary.theme && summary.theme_suggestion_id != null;
   const confidence = summary.theme_confidence != null ? Math.round(summary.theme_confidence * 100) : null;
 
   return (
@@ -72,18 +73,22 @@ export default function SummaryCard({
         <div className={styles.suggestion}>
           <span className={styles.suggestionLabel}>
             Thème suggéré :{" "}
-            <strong style={{ color: suggestedTheme.color }}>
-              {suggestedTheme.icon ? `${suggestedTheme.icon} ` : ""}{suggestedTheme.name}
-            </strong>
-            {confidence != null && <span className={styles.confidence}> {confidence} %</span>}
+            {suggestedTheme ? (
+              <strong style={{ color: suggestedTheme.color }}>
+                {suggestedTheme.icon ? `${suggestedTheme.icon} ` : ""}{suggestedTheme.name}
+              </strong>
+            ) : (
+              <strong>…</strong>
+            )}
+            {confidence != null && <span className={styles.confidence}> {confidence}&nbsp;%</span>}
           </span>
           <div className={styles.suggestionActions}>
             <button
               type="button"
               className={styles.accept}
               onClick={onAcceptSuggestion}
-              disabled={busy}
-              aria-label={`Accepter le thème ${suggestedTheme.name} pour « ${summary.title} »`}
+              disabled={busy || !suggestedTheme}
+              aria-label={`Accepter le thème ${suggestedTheme?.name ?? "suggéré"} pour « ${summary.title} »`}
             >
               ✓ Accepter
             </button>
