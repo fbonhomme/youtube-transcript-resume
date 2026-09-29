@@ -6,11 +6,17 @@ from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
 from models import Summary
-from schemas import SearchResult, SummaryListItem, TagCount
+from schemas import SearchResult, SummaryListItem, TagCount, ThemeStatusCounts
 
 router = APIRouter()
 
 SortKey = Literal["recent", "top", "densite", "niveau", "actionnable", "perennite"]
+# pending = sans thème mais avec une suggestion Jev à valider ;
+# unthemed = ni thème ni suggestion.
+ThemeStatus = Literal["pending", "unthemed"]
+
+PENDING_FILTER = (Summary.theme_id.is_(None), Summary.theme_suggestion_id.is_not(None))
+_UNTHEMED_FILTER = (Summary.theme_id.is_(None), Summary.theme_suggestion_id.is_(None))
 
 # Poids d'un like/dislike dans le score global (les notes Jev vont de 0 à 3).
 _FEEDBACK_WEIGHT = 1.5
@@ -37,9 +43,13 @@ def search(
     skip: int = 0,
     limit: int = 50,
     sort: SortKey = "recent",
+    status: ThemeStatus | None = None,
     db: Session = Depends(get_db),
 ):
     query = db.query(Summary).options(joinedload(Summary.theme))
+
+    if status is not None:
+        query = query.filter(*(PENDING_FILTER if status == "pending" else _UNTHEMED_FILTER))
 
     if q.strip():
         term = f"%{q.strip()}%"
@@ -67,6 +77,14 @@ def search(
     items = query.order_by(*order).offset(skip).limit(limit).all()
 
     return SearchResult(items=[SummaryListItem.model_validate(i) for i in items], total=total)
+
+
+@router.get("/theme-status", response_model=ThemeStatusCounts)
+def theme_status(db: Session = Depends(get_db)):
+    return ThemeStatusCounts(
+        pending=db.query(Summary).filter(*PENDING_FILTER).count(),
+        unthemed=db.query(Summary).filter(*_UNTHEMED_FILTER).count(),
+    )
 
 
 @router.get("/tags", response_model=list[TagCount])

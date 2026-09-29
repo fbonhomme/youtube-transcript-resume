@@ -87,15 +87,25 @@ export interface AnalyzeReport {
 export const analyzeLibrary = () =>
   api.post<AnalyzeReport>("/summaries/analyze").then((r) => r.data);
 
+// pending = suggestion Jev à valider ; unthemed = ni thème ni suggestion.
+export type ThemeStatus = "pending" | "unthemed";
+
 export const searchSummaries = (params: {
   q?: string;
   theme_id?: number;
   tag?: string;
   sort?: SortKey;
+  status?: ThemeStatus;
   skip?: number;
   limit?: number;
 }) =>
   api.get<SearchResult>("/search/", { params }).then((r) => r.data);
+
+export const getThemeStatus = () =>
+  api.get<Record<ThemeStatus, number>>("/search/theme-status").then((r) => r.data);
+
+export const acceptAllSuggestions = () =>
+  api.post<{ accepted: number }>("/summaries/accept-suggestions").then((r) => r.data);
 
 export interface TagCount {
   name: string;
