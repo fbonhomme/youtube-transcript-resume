@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getStats } from "../api/stats";
+import ThemeToggle from "./ThemeToggle";
 import styles from "./Layout.module.css";
 
 function CostBadge() {
@@ -57,6 +58,7 @@ export default function Layout() {
         </div>
 
         <div className={styles.navRight}>
+          <ThemeToggle />
           <CostBadge />
           <NavLink to="/new" className={styles.cta}>+ Nouvelle synthèse</NavLink>
         </div>
