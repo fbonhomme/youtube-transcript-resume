@@ -86,7 +86,7 @@
 .bannerPrimary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #000;
+  color: var(--on-accent);
 }
 .bannerPrimary:hover:not(:disabled) { background: var(--accent-dark); }
 .bannerBtn:disabled { opacity: .5; }

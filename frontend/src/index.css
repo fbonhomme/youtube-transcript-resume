@@ -28,6 +28,9 @@
   --tag-2: #ffb84d;
   --tag-3: #b07cff;
   --tag-4: #4dd6ff;
+  --on-accent: #000;
+  --nav-bg:    rgba(9,9,9,.92);
+  color-scheme: dark;
   --radius:    10px;
   --radius-sm:  6px;
   --radius-lg: 16px;
@@ -37,6 +40,37 @@
   --font-body:    'DM Sans', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
   font-size: 15px;
+}
+
+/* ── Thème clair (data-theme posé sur <html> par index.html / ThemeToggle) ── */
+:root[data-theme="light"] {
+  --bg:      #f6f6f3;
+  --bg2:     #ffffff;
+  --bg3:     #efefea;
+  --bg4:     #e5e5df;
+  --border:  #e0e0d9;
+  --border2: #cbcbc3;
+  --text:    #141414;
+  --text2:   #5a5a5a;
+  --text3:   #686868;
+  --accent:       #4f7d00;
+  --accent-dim:   rgba(79,125,0,.08);
+  --accent-glow:  rgba(79,125,0,.20);
+  --accent-dark:  #3f6600;
+  --danger:       #d11a3e;
+  --danger-dim:   rgba(209,26,62,.07);
+  --success:      #0f8f5a;
+  --glow:        rgba(140,200,0,.10);
+  --glow-strong: rgba(140,200,0,.16);
+  --elev:        0 6px 20px rgba(0,0,0,.07);
+  --elev-hover:  0 12px 32px rgba(0,0,0,.12);
+  --tag-1: #4f7d00;
+  --tag-2: #a85f00;
+  --tag-3: #7340d0;
+  --tag-4: #00799e;
+  --on-accent: #fff;
+  --nav-bg:    rgba(246,246,243,.9);
+  color-scheme: light;
 }
 
 body {
@@ -105,7 +139,7 @@ input, textarea, select { font-family: inherit; }
   align-items: center;
   gap: 6px;
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.9rem;
@@ -113,7 +147,7 @@ input, textarea, select { font-family: inherit; }
   border-radius: 999px;
   padding: 10px 22px;
   transition: filter .15s, transform .15s, box-shadow .15s;
-  box-shadow: 0 0 0 rgba(201,255,71,0);
+  box-shadow: none;
 }
 .u-pill-btn:hover { filter: brightness(1.06); box-shadow: 0 6px 24px var(--glow-strong); }
 .u-pill-btn:active { transform: translateY(1px); }
@@ -169,7 +203,7 @@ input, textarea, select { font-family: inherit; }
 .u-pill-filter:hover { background: var(--bg4); color: var(--text); border-color: var(--border2); }
 .u-pill-filter.is-active {
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent);
   border-color: var(--accent);
 }
 

@@ -33,7 +33,7 @@
   top: 8px;
   left: 8px;
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent);
   font-family: var(--font-mono);
   font-size: 0.68rem;
   font-weight: 700;
@@ -79,7 +79,7 @@
 
 .accept {
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent);
   border: 1px solid var(--accent);
 }
 .accept:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
@@ -223,7 +223,7 @@
   border: 1px solid transparent;
   letter-spacing: 0.02em;
 }
-.tag0 { background: rgba(201,255,71,.14); color: var(--tag-1); border-color: rgba(201,255,71,.3); }
-.tag1 { background: rgba(255,184,77,.14); color: var(--tag-2); border-color: rgba(255,184,77,.3); }
-.tag2 { background: rgba(176,124,255,.14); color: var(--tag-3); border-color: rgba(176,124,255,.3); }
-.tag3 { background: rgba(77,214,255,.14); color: var(--tag-4); border-color: rgba(77,214,255,.3); }
+.tag0 { background: color-mix(in srgb, var(--tag-1) 14%, transparent); color: var(--tag-1); border-color: color-mix(in srgb, var(--tag-1) 30%, transparent); }
+.tag1 { background: color-mix(in srgb, var(--tag-2) 14%, transparent); color: var(--tag-2); border-color: color-mix(in srgb, var(--tag-2) 30%, transparent); }
+.tag2 { background: color-mix(in srgb, var(--tag-3) 14%, transparent); color: var(--tag-3); border-color: color-mix(in srgb, var(--tag-3) 30%, transparent); }
+.tag3 { background: color-mix(in srgb, var(--tag-4) 14%, transparent); color: var(--tag-4); border-color: color-mix(in srgb, var(--tag-4) 30%, transparent); }
